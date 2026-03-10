@@ -1,0 +1,2321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UrbanIQ — Smart City Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #050810;
+  --bg2: #080d1a;
+  --bg3: #0d1425;
+  --panel: rgba(10,18,40,0.92);
+  --border: rgba(0,200,255,0.15);
+  --border2: rgba(0,200,255,0.35);
+  --cyan: #00c8ff;
+  --cyan2: #00f0ff;
+  --green: #00ff9d;
+  --orange: #ff8c00;
+  --red: #ff3366;
+  --yellow: #ffd700;
+  --purple: #a855f7;
+  --text: #c8d8f0;
+  --text2: #6a8aaa;
+  --glow: 0 0 20px rgba(0,200,255,0.4);
+  --glow2: 0 0 40px rgba(0,200,255,0.2);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Rajdhani',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-track{background:var(--bg2);} ::-webkit-scrollbar-thumb{background:var(--cyan);border-radius:2px;}
+
+/* GRID BACKGROUND */
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,200,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
+/* TOP NAV */
+#topnav{position:fixed;top:0;left:0;right:0;height:60px;background:rgba(5,8,16,0.97);border-bottom:1px solid var(--border2);display:flex;align-items:center;padding:0 20px;gap:12px;z-index:1000;backdrop-filter:blur(10px);}
+.logo{font-family:'Orbitron',sans-serif;font-size:1.3rem;font-weight:900;color:var(--cyan);letter-spacing:3px;text-shadow:var(--glow);white-space:nowrap;}
+.logo span{color:var(--green);}
+.nav-tabs{display:flex;gap:4px;flex-wrap:wrap;flex:1;overflow:hidden;}
+.nav-tab{font-family:'Rajdhani',sans-serif;font-size:0.78rem;font-weight:600;padding:5px 10px;background:transparent;border:1px solid var(--border);color:var(--text2);cursor:pointer;border-radius:4px;letter-spacing:1px;text-transform:uppercase;transition:all .2s;white-space:nowrap;}
+.nav-tab:hover,.nav-tab.active{background:rgba(0,200,255,0.1);border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 12px rgba(0,200,255,0.2);}
+.nav-right{display:flex;align-items:center;gap:12px;margin-left:auto;}
+.live-badge{background:rgba(0,255,157,0.15);border:1px solid var(--green);color:var(--green);font-size:0.7rem;padding:3px 8px;border-radius:20px;display:flex;align-items:center;gap:5px;font-weight:600;}
+.live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.3);}}
+#darkmode-btn{background:transparent;border:1px solid var(--border);color:var(--text2);padding:5px 10px;border-radius:4px;cursor:pointer;font-size:1rem;}
+#voice-btn{background:rgba(168,85,247,0.1);border:1px solid var(--purple);color:var(--purple);padding:5px 10px;border-radius:4px;cursor:pointer;font-size:0.75rem;font-family:'Rajdhani',sans-serif;font-weight:600;}
+
+/* MAIN LAYOUT */
+#app{margin-top:60px;position:relative;z-index:1;}
+.section{display:none;padding:20px;}
+.section.active{display:block;}
+
+/* DASHBOARD */
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px;}
+.stat-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:16px;position:relative;overflow:hidden;cursor:pointer;transition:all .25s;}
+.stat-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,200,255,0.05),transparent);pointer-events:none;}
+.stat-card:hover{border-color:var(--cyan);transform:translateY(-2px);box-shadow:var(--glow2);}
+.stat-icon{font-size:1.8rem;margin-bottom:8px;}
+.stat-label{font-size:0.72rem;letter-spacing:2px;text-transform:uppercase;color:var(--text2);font-weight:600;}
+.stat-value{font-family:'Orbitron',sans-serif;font-size:1.5rem;font-weight:700;margin:4px 0;}
+.stat-change{font-size:0.72rem;font-weight:600;}
+.stat-change.up{color:var(--green);}
+.stat-change.down{color:var(--red);}
+.stat-change.warn{color:var(--orange);}
+
+/* PANELS */
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px;}
+.row-full{margin-bottom:20px;}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:18px;}
+.panel-title{font-family:'Orbitron',sans-serif;font-size:0.78rem;font-weight:700;color:var(--cyan);letter-spacing:2px;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.panel-title .dot{width:8px;height:8px;background:var(--cyan);border-radius:50%;box-shadow:0 0 8px var(--cyan);}
+
+/* MAP */
+#map-canvas{width:100%;height:420px;border-radius:6px;position:relative;background:#060f1e;overflow:hidden;border:1px solid var(--border);}
+.map-road{position:absolute;background:rgba(0,200,255,0.2);}
+.map-road.h{height:3px;}
+.map-road.v{width:3px;}
+.map-road.congested{background:rgba(255,51,102,0.6);}
+.map-road.moderate{background:rgba(255,140,0,0.6);}
+.map-road.clear{background:rgba(0,255,157,0.4);}
+.map-vehicle{position:absolute;width:10px;height:10px;border-radius:50%;transition:all 1s linear;}
+.map-vehicle.car{background:var(--cyan);box-shadow:0 0 6px var(--cyan);}
+.map-vehicle.bus{background:var(--green);box-shadow:0 0 8px var(--green);width:14px;height:14px;border-radius:3px;}
+.map-vehicle.emergency{background:var(--red);box-shadow:0 0 10px var(--red);width:12px;height:12px;animation:emerg .5s infinite alternate;}
+@keyframes emerg{from{box-shadow:0 0 8px var(--red);}to{box-shadow:0 0 20px var(--red),0 0 40px rgba(255,51,102,0.4);}}
+.map-label{position:absolute;font-size:0.6rem;color:var(--text2);font-family:'JetBrains Mono',monospace;}
+.map-incident{position:absolute;width:14px;height:14px;background:var(--orange);border-radius:50%;border:2px solid var(--yellow);animation:pulse 1s infinite;cursor:pointer;}
+.map-controls{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:6px;z-index:10;}
+.map-btn{width:32px;height:32px;background:rgba(5,8,16,0.9);border:1px solid var(--border2);color:var(--cyan);font-size:1rem;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.map-btn:hover{background:rgba(0,200,255,0.15);border-color:var(--cyan);}
+.map-legend{position:absolute;bottom:10px;left:10px;background:rgba(5,8,16,0.9);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:0.65rem;}
+.legend-item{display:flex;align-items:center;gap:6px;margin:2px 0;font-family:'JetBrains Mono',monospace;}
+.legend-dot{width:8px;height:8px;border-radius:50%;}
+.map-overlay-info{position:absolute;top:10px;left:10px;background:rgba(5,8,16,0.9);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:0.7rem;min-width:140px;}
+.map-stats-bar{display:flex;gap:16px;margin-top:6px;flex-wrap:wrap;}
+.map-stat{text-align:center;}
+.map-stat .v{font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:700;}
+.map-stat .l{font-size:0.65rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px;}
+
+/* HEATMAP */
+.heatmap-grid{display:grid;grid-template-columns:repeat(20,1fr);grid-template-rows:repeat(10,1fr);height:200px;gap:2px;border-radius:6px;overflow:hidden;}
+.heat-cell{border-radius:2px;transition:all .8s;cursor:pointer;}
+
+/* CHARTS */
+.chart-area{width:100%;height:160px;position:relative;overflow:hidden;}
+canvas.chart{width:100%!important;height:100%!important;}
+
+/* PROGRESS BARS */
+.progress-row{margin:8px 0;}
+.progress-label{display:flex;justify-content:space-between;font-size:0.72rem;margin-bottom:4px;color:var(--text2);}
+.progress-label span:last-child{font-family:'Orbitron',sans-serif;font-size:0.7rem;}
+.progress-track{height:6px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;transition:width 1s ease;}
+
+/* TRAFFIC LIGHTS */
+.traffic-lights-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;}
+.tl-box{background:rgba(5,8,16,0.8);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;}
+.tl-id{font-size:0.65rem;color:var(--text2);font-family:'JetBrains Mono',monospace;margin-bottom:8px;}
+.tl-lights{display:flex;flex-direction:column;align-items:center;gap:5px;background:#111;border-radius:20px;padding:8px;width:36px;margin:0 auto 8px;}
+.tl-light{width:20px;height:20px;border-radius:50%;opacity:.2;transition:all .3s;}
+.tl-light.active{opacity:1;}
+.tl-light.red{background:#ff3366;}
+.tl-light.yellow{background:#ffd700;}
+.tl-light.green{background:#00ff9d;}
+.tl-light.active.red{box-shadow:0 0 12px #ff3366;}
+.tl-light.active.yellow{box-shadow:0 0 12px #ffd700;}
+.tl-light.active.green{box-shadow:0 0 12px #00ff9d;}
+.tl-timer{font-family:'Orbitron',sans-serif;font-size:1rem;font-weight:700;}
+.tl-mode{font-size:0.6rem;color:var(--purple);text-transform:uppercase;letter-spacing:1px;margin-top:4px;}
+
+/* PARKING */
+.parking-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;}
+.parking-lot{background:rgba(5,8,16,0.8);border:1px solid var(--border);border-radius:6px;padding:10px;text-align:center;cursor:pointer;transition:all .2s;}
+.parking-lot:hover{border-color:var(--cyan);}
+.parking-lot.available{border-color:rgba(0,255,157,0.3);}
+.parking-lot.full{border-color:rgba(255,51,102,0.3);}
+.parking-lot.moderate{border-color:rgba(255,140,0,0.3);}
+.parking-name{font-size:0.65rem;color:var(--text2);font-family:'JetBrains Mono',monospace;margin-bottom:6px;}
+.parking-count{font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:2px;}
+.parking-total{font-size:0.6rem;color:var(--text2);}
+.parking-bar{height:4px;background:rgba(255,255,255,0.05);border-radius:2px;margin-top:6px;overflow:hidden;}
+.parking-fill{height:100%;border-radius:2px;transition:width 1s;}
+.parking-price{font-size:0.65rem;color:var(--yellow);margin-top:4px;}
+.parking-ev{font-size:0.6rem;color:var(--green);}
+
+/* BUS TRACKING */
+.bus-list{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;}
+.bus-item{background:rgba(5,8,16,0.6);border:1px solid var(--border);border-radius:6px;padding:10px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .2s;}
+.bus-item:hover{border-color:var(--green);background:rgba(0,255,157,0.04);}
+.bus-num{font-family:'Orbitron',sans-serif;font-size:1rem;font-weight:700;color:var(--green);min-width:40px;}
+.bus-info{flex:1;}
+.bus-route{font-size:0.8rem;font-weight:600;color:var(--text);}
+.bus-status{font-size:0.65rem;color:var(--text2);font-family:'JetBrains Mono',monospace;margin-top:2px;}
+.bus-eta{font-family:'Orbitron',sans-serif;font-size:0.85rem;font-weight:700;}
+.bus-occ{font-size:0.6rem;text-transform:uppercase;letter-spacing:1px;}
+.occ-low{color:var(--green);}
+.occ-med{color:var(--orange);}
+.occ-high{color:var(--red);}
+
+/* ALERTS */
+.alerts-list{display:flex;flex-direction:column;gap:8px;max-height:320px;overflow-y:auto;}
+.alert-item{background:rgba(5,8,16,0.6);border-left:3px solid;border-radius:0 6px 6px 0;padding:10px 14px;display:flex;align-items:flex-start;gap:10px;cursor:pointer;transition:all .2s;}
+.alert-item:hover{background:rgba(0,200,255,0.04);}
+.alert-item.critical{border-color:var(--red);}
+.alert-item.warning{border-color:var(--orange);}
+.alert-item.info{border-color:var(--cyan);}
+.alert-item.success{border-color:var(--green);}
+.alert-icon{font-size:1.1rem;margin-top:1px;}
+.alert-text .title{font-size:0.82rem;font-weight:600;margin-bottom:2px;}
+.alert-text .desc{font-size:0.7rem;color:var(--text2);}
+.alert-text .time{font-size:0.62rem;color:var(--text2);font-family:'JetBrains Mono',monospace;margin-top:3px;}
+.alert-dismiss{margin-left:auto;background:transparent;border:none;color:var(--text2);cursor:pointer;font-size:0.9rem;padding:2px;}
+
+/* BUTTONS */
+.btn{font-family:'Rajdhani',sans-serif;font-size:0.8rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:8px 16px;border-radius:4px;cursor:pointer;border:1px solid;transition:all .2s;}
+.btn-cyan{background:rgba(0,200,255,0.1);border-color:var(--cyan);color:var(--cyan);}
+.btn-cyan:hover{background:rgba(0,200,255,0.2);box-shadow:var(--glow);}
+.btn-green{background:rgba(0,255,157,0.1);border-color:var(--green);color:var(--green);}
+.btn-green:hover{background:rgba(0,255,157,0.2);}
+.btn-red{background:rgba(255,51,102,0.1);border-color:var(--red);color:var(--red);}
+.btn-red:hover{background:rgba(255,51,102,0.2);}
+.btn-orange{background:rgba(255,140,0,0.1);border-color:var(--orange);color:var(--orange);}
+.btn-orange:hover{background:rgba(255,140,0,0.2);}
+.btn-sm{padding:5px 10px;font-size:0.72rem;}
+
+/* INPUTS */
+.input{font-family:'Rajdhani',sans-serif;font-size:0.85rem;font-weight:500;background:rgba(5,8,16,0.8);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:4px;outline:none;transition:all .2s;width:100%;}
+.input:focus{border-color:var(--cyan);box-shadow:0 0 8px rgba(0,200,255,0.2);}
+.input::placeholder{color:var(--text2);}
+select.input option{background:#0d1425;}
+.form-row{display:flex;gap:8px;margin-bottom:10px;align-items:flex-end;}
+.form-group{flex:1;}
+.form-label{font-size:0.7rem;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;display:block;}
+.route-result{background:rgba(0,200,255,0.05);border:1px solid var(--border2);border-radius:6px;padding:12px;margin-top:10px;}
+.route-step{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:0.8rem;}
+.route-step:last-child{border:none;}
+.route-icon{width:24px;text-align:center;}
+
+/* ENV GAUGES */
+.gauge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;}
+.gauge-box{background:rgba(5,8,16,0.8);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;}
+.gauge-name{font-size:0.65rem;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;}
+.gauge-value{font-family:'Orbitron',sans-serif;font-size:1.4rem;font-weight:700;}
+.gauge-unit{font-size:0.65rem;color:var(--text2);}
+.gauge-status{font-size:0.65rem;padding:2px 8px;border-radius:10px;margin-top:6px;display:inline-block;font-weight:600;}
+.status-good{background:rgba(0,255,157,0.1);color:var(--green);border:1px solid rgba(0,255,157,0.3);}
+.status-moderate{background:rgba(255,140,0,0.1);color:var(--orange);border:1px solid rgba(255,140,0,0.3);}
+.status-bad{background:rgba(255,51,102,0.1);color:var(--red);border:1px solid rgba(255,51,102,0.3);}
+.gauge-arc{position:relative;width:70px;height:35px;margin:0 auto 6px;overflow:hidden;}
+.gauge-arc-bg{position:absolute;width:70px;height:70px;border-radius:50%;border:5px solid rgba(255,255,255,0.05);clip-path:polygon(0 50%,100% 50%,100% 0,0 0);}
+.gauge-arc-fill{position:absolute;width:70px;height:70px;border-radius:50%;border:5px solid;clip-path:polygon(0 50%,100% 50%,100% 0,0 0);transition:transform 1s ease;transform-origin:bottom center;}
+
+/* REPORT */
+.report-form{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.report-map{height:200px;background:#060f1e;border:1px solid var(--border);border-radius:6px;position:relative;cursor:crosshair;display:flex;align-items:center;justify-content:center;color:var(--text2);font-size:0.8rem;}
+.report-pins{position:absolute;inset:0;}
+.report-pin{position:absolute;width:16px;height:16px;transform:translate(-50%,-50%);cursor:pointer;}
+.pin-circle{width:12px;height:12px;border-radius:50%;border:2px solid white;animation:pulse 1s infinite;}
+.pin-type-pothole{background:var(--orange);}
+.pin-type-accident{background:var(--red);}
+.pin-type-damage{background:var(--yellow);}
+.pin-type-violation{background:var(--purple);}
+
+/* CARPOOL */
+.carpool-list{display:flex;flex-direction:column;gap:8px;}
+.carpool-item{background:rgba(5,8,16,0.6);border:1px solid var(--border);border-radius:6px;padding:12px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .2s;}
+.carpool-item:hover{border-color:var(--purple);}
+.carpool-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--cyan));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.9rem;}
+.carpool-info{flex:1;}
+.carpool-name{font-size:0.82rem;font-weight:600;}
+.carpool-route{font-size:0.7rem;color:var(--text2);}
+.carpool-meta{font-size:0.65rem;color:var(--text2);font-family:'JetBrains Mono',monospace;margin-top:2px;}
+.carpool-rating{color:var(--yellow);font-size:0.75rem;}
+.carpool-seats{background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);color:var(--purple);font-size:0.65rem;padding:3px 8px;border-radius:10px;font-weight:600;}
+
+/* ANALYTICS */
+.analytics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:20px;}
+.metric-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:16px;}
+.metric-title{font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--text2);margin-bottom:10px;}
+.metric-big{font-family:'Orbitron',sans-serif;font-size:2rem;font-weight:700;}
+.metric-sub{font-size:0.72rem;color:var(--text2);margin-top:2px;}
+.sparkline{height:40px;margin-top:10px;}
+
+/* AUTONOMOUS */
+.av-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.av-vehicle{background:rgba(5,8,16,0.8);border:1px solid var(--border);border-radius:8px;padding:14px;cursor:pointer;transition:all .2s;}
+.av-vehicle:hover{border-color:var(--cyan);}
+.av-vehicle.active{border-color:var(--green);}
+.av-id{font-family:'Orbitron',sans-serif;font-size:0.85rem;font-weight:700;color:var(--cyan);}
+.av-status{font-size:0.7rem;margin-top:4px;}
+.av-bar{margin-top:8px;}
+.av-metrics{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px;}
+.av-metric{background:rgba(0,200,255,0.05);border:1px solid var(--border);border-radius:4px;padding:6px 8px;text-align:center;}
+.av-metric .v{font-family:'Orbitron',sans-serif;font-size:0.85rem;font-weight:700;}
+.av-metric .l{font-size:0.58rem;color:var(--text2);text-transform:uppercase;letter-spacing:1px;}
+
+/* DIGITAL TWIN */
+.twin-canvas{width:100%;height:300px;background:#04080f;border:1px solid var(--border);border-radius:6px;position:relative;overflow:hidden;}
+.twin-building{position:absolute;background:rgba(0,200,255,0.08);border:1px solid rgba(0,200,255,0.2);border-radius:2px;}
+.twin-road-h{position:absolute;background:rgba(255,255,255,0.06);height:12px;}
+.twin-road-v{position:absolute;background:rgba(255,255,255,0.06);width:12px;}
+.twin-vehicle{position:absolute;width:6px;height:10px;border-radius:1px;background:var(--cyan);box-shadow:0 0 4px var(--cyan);transition:all 0.8s linear;}
+.twin-label{position:absolute;font-family:'JetBrains Mono',monospace;font-size:0.55rem;color:rgba(0,200,255,0.4);}
+.twin-stats-overlay{position:absolute;top:10px;right:10px;background:rgba(5,8,16,0.95);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:0.7rem;}
+.twin-stat-row{display:flex;gap:16px;margin:3px 0;}
+.twin-stat-row .k{color:var(--text2);}
+.twin-stat-row .v{font-family:'Orbitron',sans-serif;font-size:0.75rem;font-weight:700;}
+
+/* TOLL */
+.toll-list{display:flex;flex-direction:column;gap:8px;}
+.toll-item{background:rgba(5,8,16,0.6);border:1px solid var(--border);border-radius:6px;padding:10px 14px;display:flex;align-items:center;gap:12px;}
+.toll-id{font-family:'Orbitron',sans-serif;font-size:0.85rem;font-weight:700;color:var(--yellow);min-width:60px;}
+.toll-info{flex:1;}
+.toll-name{font-size:0.8rem;font-weight:600;}
+.toll-traffic{font-size:0.65rem;color:var(--text2);margin-top:2px;}
+.toll-price{font-family:'Orbitron',sans-serif;font-size:1rem;font-weight:700;color:var(--yellow);}
+.toll-dynamic{font-size:0.6rem;color:var(--text2);text-align:right;}
+
+/* CARBON */
+.carbon-section{background:rgba(0,255,157,0.03);border:1px solid rgba(0,255,157,0.15);border-radius:8px;padding:16px;}
+.carbon-big{font-family:'Orbitron',sans-serif;font-size:2.5rem;font-weight:700;color:var(--green);text-align:center;}
+.carbon-label{text-align:center;font-size:0.7rem;color:var(--text2);letter-spacing:1px;text-transform:uppercase;}
+
+/* TICKER */
+#ticker{background:rgba(0,200,255,0.05);border-top:1px solid var(--border);border-bottom:1px solid var(--border);overflow:hidden;height:28px;display:flex;align-items:center;}
+.ticker-inner{display:flex;gap:40px;animation:ticker-scroll 40s linear infinite;white-space:nowrap;padding-left:100%;}
+@keyframes ticker-scroll{from{transform:translateX(0);}to{transform:translateX(-100%);}}
+.ticker-item{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text2);display:flex;align-items:center;gap:8px;}
+.ticker-item.alert-t{color:var(--orange);}
+.ticker-item.ok-t{color:var(--green);}
+.ticker-item.info-t{color:var(--cyan);}
+
+/* MODAL */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.modal.open{display:flex;}
+.modal-box{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:24px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 0 60px rgba(0,200,255,0.15);}
+.modal-title{font-family:'Orbitron',sans-serif;font-size:1rem;font-weight:700;color:var(--cyan);margin-bottom:16px;letter-spacing:2px;}
+.modal-close{float:right;background:transparent;border:none;color:var(--text2);cursor:pointer;font-size:1.2rem;margin-top:-4px;}
+
+/* TOAST */
+#toast-container{position:fixed;bottom:20px;right:20px;z-index:9998;display:flex;flex-direction:column;gap:8px;}
+.toast{background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:10px 16px;font-size:0.8rem;max-width:320px;animation:toast-in .3s ease;display:flex;align-items:center;gap:8px;}
+.toast.success{border-color:var(--green);}
+.toast.error{border-color:var(--red);}
+.toast.warning{border-color:var(--orange);}
+@keyframes toast-in{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
+
+/* RIDE SHARE */
+.share-options{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.share-card{background:rgba(5,8,16,0.8);border:1px solid var(--border);border-radius:8px;padding:14px;cursor:pointer;transition:all .2s;text-align:center;}
+.share-card:hover{border-color:var(--cyan);transform:translateY(-2px);}
+.share-card-icon{font-size:2rem;margin-bottom:8px;}
+.share-card-name{font-size:0.85rem;font-weight:700;color:var(--cyan);}
+.share-card-desc{font-size:0.68rem;color:var(--text2);margin-top:4px;}
+.share-card-price{font-family:'Orbitron',sans-serif;font-size:0.9rem;font-weight:700;color:var(--yellow);margin-top:6px;}
+.share-card-wait{font-size:0.65rem;color:var(--text2);}
+
+/* EV ROUTE */
+.ev-stations{display:flex;flex-direction:column;gap:8px;max-height:250px;overflow-y:auto;}
+.ev-station{background:rgba(5,8,16,0.6);border:1px solid rgba(0,255,157,0.2);border-radius:6px;padding:10px 14px;display:flex;align-items:center;gap:12px;}
+.ev-icon{font-size:1.4rem;}
+.ev-info{flex:1;}
+.ev-name{font-size:0.8rem;font-weight:600;}
+.ev-dist{font-size:0.65rem;color:var(--text2);}
+.ev-ports{font-size:0.65rem;color:var(--green);}
+.ev-speed{font-size:0.65rem;color:var(--cyan);}
+.ev-wait{font-size:0.65rem;color:var(--orange);}
+
+/* CONGESTION PRICING */
+.pricing-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;}
+.price-zone{background:rgba(5,8,16,0.8);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;}
+.price-zone-name{font-size:0.7rem;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
+.price-zone-price{font-family:'Orbitron',sans-serif;font-size:1.3rem;font-weight:700;}
+.price-zone-level{font-size:0.65rem;margin-top:4px;}
+
+/* DRONE */
+.drone-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+.drone-card{background:rgba(5,8,16,0.8);border:1px solid rgba(168,85,247,0.2);border-radius:8px;padding:12px;text-align:center;cursor:pointer;transition:all .2s;}
+.drone-card:hover{border-color:var(--purple);}
+.drone-icon{font-size:2rem;margin-bottom:6px;}
+.drone-id{font-family:'Orbitron',sans-serif;font-size:0.8rem;font-weight:700;color:var(--purple);}
+.drone-status{font-size:0.65rem;margin-top:4px;}
+.drone-battery{margin-top:8px;}
+
+/* TABS IN SECTION */
+.section-tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+.stab{font-family:'Rajdhani',sans-serif;font-size:0.75rem;font-weight:600;padding:5px 12px;background:transparent;border:1px solid var(--border);color:var(--text2);cursor:pointer;border-radius:20px;letter-spacing:1px;text-transform:uppercase;transition:all .2s;}
+.stab:hover,.stab.active{background:rgba(0,200,255,0.1);border-color:var(--cyan);color:var(--cyan);}
+
+/* MISC */
+.tag{font-size:0.62rem;padding:2px 7px;border-radius:10px;font-weight:600;display:inline-flex;align-items:center;gap:3px;}
+.tag-green{background:rgba(0,255,157,0.1);color:var(--green);border:1px solid rgba(0,255,157,0.25);}
+.tag-red{background:rgba(255,51,102,0.1);color:var(--red);border:1px solid rgba(255,51,102,0.25);}
+.tag-orange{background:rgba(255,140,0,0.1);color:var(--orange);border:1px solid rgba(255,140,0,0.25);}
+.tag-cyan{background:rgba(0,200,255,0.1);color:var(--cyan);border:1px solid rgba(0,200,255,0.25);}
+.tag-purple{background:rgba(168,85,247,0.1);color:var(--purple);border:1px solid rgba(168,85,247,0.25);}
+.divider{height:1px;background:var(--border);margin:14px 0;}
+table{width:100%;border-collapse:collapse;}
+th{font-size:0.65rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;}
+td{font-size:0.78rem;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.03);}
+tr:hover td{background:rgba(0,200,255,0.02);}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .row2,.row3{grid-template-columns:1fr;}
+  .report-form{grid-template-columns:1fr;}
+  .av-grid{grid-template-columns:1fr;}
+  .share-options{grid-template-columns:1fr;}
+  .nav-tabs{display:none;}
+  .logo{font-size:1rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav id="topnav">
+  <div class="logo">URBAN<span>IQ</span></div>
+  <div class="nav-tabs" id="navTabs"></div>
+  <div class="nav-right">
+    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+    <button id="voice-btn" onclick="toggleVoice()">🎙 VOICE</button>
+    <button id="darkmode-btn" onclick="toggleDark()">☀️</button>
+  </div>
+</nav>
+
+<!-- TICKER -->
+<div id="ticker">
+  <div class="ticker-inner" id="tickerInner"></div>
+</div>
+
+<!-- APP -->
+<div id="app">
+
+<!-- ===== DASHBOARD ===== -->
+<div class="section active" id="sec-dashboard">
+  <div class="dash-grid" id="statsGrid"></div>
+  <div class="row2">
+    <div class="panel" style="grid-column:1/-1">
+      <div class="panel-title"><div class="dot"></div>REAL-TIME CITY MAP</div>
+      <div id="map-canvas">
+        <div class="map-controls">
+          <button class="map-btn" onclick="mapZoom(1)" title="Zoom In">+</button>
+          <button class="map-btn" onclick="mapZoom(-1)" title="Zoom Out">−</button>
+          <button class="map-btn" onclick="toggleLayer('vehicles')" title="Vehicles">🚗</button>
+          <button class="map-btn" onclick="toggleLayer('buses')" title="Buses">🚌</button>
+          <button class="map-btn" onclick="toggleLayer('incidents')" title="Incidents">⚠️</button>
+          <button class="map-btn" onclick="toggleLayer('heatmap')" title="Heatmap">🔥</button>
+        </div>
+        <div class="map-overlay-info" id="mapOverlay">
+          <div style="font-family:Orbitron,sans-serif;font-size:.7rem;color:var(--cyan);margin-bottom:6px;letter-spacing:1px;">CITY OVERVIEW</div>
+          <div class="map-stats-bar">
+            <div class="map-stat"><div class="v" style="color:var(--green)" id="mapVehicles">0</div><div class="l">Vehicles</div></div>
+            <div class="map-stat"><div class="v" style="color:var(--orange)" id="mapCongested">0</div><div class="l">Congested</div></div>
+            <div class="map-stat"><div class="v" style="color:var(--red)" id="mapIncidents">0</div><div class="l">Incidents</div></div>
+          </div>
+        </div>
+        <div class="map-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Clear</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div>Moderate</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Congested</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--cyan)"></div>Vehicles</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--green);border-radius:2px"></div>Buses</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row2">
+    <div class="panel">
+      <div class="panel-title"><div class="dot" style="background:var(--orange)"></div>TRAFFIC HEATMAP</div>
+      <div class="heatmap-grid" id="heatmapGrid"></div>
+      <div style="display:flex;gap:8px;margin-top:8px;font-size:.65rem;font-family:'JetBrains Mono',monospace;color:var(--text2);">
+        <span style="color:var(--green)">▬ Low</span>
+        <span style="color:var(--yellow)">▬ Medium</span>
+        <span style="color:var(--orange)">▬ High</span>
+        <span style="color:var(--red)">▬ Critical</span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title"><div class="dot" style="background:var(--green)"></div>TRAFFIC FLOW (24H)</div>
+      <div class="chart-area"><canvas id="trafficChart" class="chart"></canvas></div>
+      <div id="peakInfo" style="margin-top:8px;font-size:.72rem;color:var(--text2);"></div>
+    </div>
+  </div>
+  <div class="row2">
+    <div class="panel">
+      <div class="panel-title"><div class="dot" style="background:var(--red)"></div>LIVE ALERTS</div>
+      <div class="alerts-list" id="alertsList"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title"><div class="dot" style="background:var(--yellow)"></div>ROAD USAGE</div>
+      <div id="roadUsage"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TRAFFIC ===== -->
+<div class="section" id="sec-traffic">
+  <div class="section-tabs">
+    <button class="stab active" onclick="showStab(this,'traffic','monitoring')">Monitoring</button>
+    <button class="stab" onclick="showStab(this,'traffic','lights')">Smart Lights</button>
+    <button class="stab" onclick="showStab(this,'traffic','incidents')">Incidents</button>
+    <button class="stab" onclick="showStab(this,'traffic','prediction')">Prediction</button>
+    <button class="stab" onclick="showStab(this,'traffic','cameras')">Cameras</button>
+  </div>
+  <div id="traffic-monitoring">
+    <div class="row3">
+      <div class="panel"><div class="panel-title"><div class="dot"></div>SPEED MONITORING</div><div id="speedMonitor"></div></div>
+      <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--orange)"></div>VEHICLE DENSITY</div><div id="densityMonitor"></div></div>
+      <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--green)"></div>ROAD CAPACITY</div><div id="capacityMonitor"></div></div>
+    </div>
+    <div class="row2">
+      <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--red)"></div>CONSTRUCTION ZONES</div><div id="constructionZones"></div></div>
+      <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--yellow)"></div>SCHOOL ZONES</div><div id="schoolZones"></div></div>
+    </div>
+    <div class="panel row-full"><div class="panel-title"><div class="dot" style="background:var(--cyan)"></div>HIGHWAY MONITORING</div><div id="highwayMonitor"></div></div>
+  </div>
+  <div id="traffic-lights" style="display:none">
+    <div class="panel row-full">
+      <div class="panel-title"><div class="dot" style="background:var(--green)"></div>AI ADAPTIVE TRAFFIC LIGHTS</div>
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+        <button class="btn btn-cyan btn-sm" onclick="setAllLights('optimize')">⚡ AI OPTIMIZE ALL</button>
+        <button class="btn btn-green btn-sm" onclick="setAllLights('emergency')">🚨 EMERGENCY CORRIDOR</button>
+        <button class="btn btn-orange btn-sm" onclick="setAllLights('pedestrian')">🚶 PEDESTRIAN MODE</button>
+        <button class="btn btn-red btn-sm" onclick="setAllLights('night')">🌙 NIGHT MODE</button>
+      </div>
+      <div class="traffic-lights-grid" id="trafficLightsGrid"></div>
+    </div>
+  </div>
+  <div id="traffic-incidents" style="display:none">
+    <div class="row2">
+      <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--red)"></div>INCIDENT DETECTION</div><div id="incidentList"></div></div>
+      <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--orange)"></div>ACCIDENT HOTSPOTS</div><div id="hotspotList"></div></div>
+    </div>
+  </div>
+  <div id="traffic-prediction" style="display:none">
+    <div class="panel row-full">
+      <div class="panel-title"><div class="dot" style="background:var(--purple)"></div>AI CONGESTION FORECAST (72H)</div>
+      <div class="chart-area" style="height:220px"><canvas id="predictionChart" class="chart"></canvas></div>
+      <div id="predictionInsights" style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;"></div>
+    </div>
+  </div>
+  <div id="traffic-cameras" style="display:none">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;" id="camerasGrid"></div>
+  </div>
+</div>
+
+<!-- ===== NAVIGATION ===== -->
+<div class="section" id="sec-navigation">
+  <div class="row2">
+    <div class="panel">
+      <div class="panel-title"><div class="dot"></div>SMART ROUTE PLANNER</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">From</label><input class="input" id="routeFrom" placeholder="Enter start location" value="Downtown Station"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">To</label><input class="input" id="routeTo" placeholder="Enter destination" value="Tech Park North"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Mode</label>
+          <select class="input" id="routeMode">
+            <option>🚗 Fastest Route</option>
+            <option>⛽ Fuel Efficient</option>
+            <option>🌿 Eco-Friendly</option>
+            <option>💰 Avoid Tolls</option>
+            <option>🛣️ Avoid Highway</option>
+            <option>🚶 Pedestrian</option>
+            <option>🚲 Bicycle</option>
+            <option>🚛 Truck-Friendly</option>
+            <option>⚡ EV Optimized</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:0">
+          <label class="form-label">&nbsp;</label>
+          <button class="btn btn-cyan" onclick="planRoute()">PLAN</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+        <label style="font-size:.7rem;color:var(--text2);display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" id="avoidAccident"> Avoid Accidents</label>
+        <label style="font-size:.7rem;color:var(--text2);display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" id="avoidWork"> Avoid Roadwork</label>
+        <label style="font-size:.7rem;color:var(--text2);display:flex;align-items:center;gap:4px;cursor:pointer;"><input type="checkbox" id="addStop"> Multi-Stop</label>
+      </div>
+      <div id="routeResult"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title"><div class="dot" style="background:var(--orange)"></div>ALTERNATE ROUTES</div>
+      <div id="altRoutes"></div>
+    </div>
+  </div>
+  <div class="row2">
+    <div class="panel">
+      <div class="panel-title"><div class="dot" style="background:var(--green)"></div>EV CHARGING ROUTE PLANNER</div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Current Battery %</label><input class="input" id="evBattery" type="number" value="35" min="0" max="100"></div><div class="form-group"><label class="form-label">Vehicle Range (km)</label><input class="input" id="evRange" type="number" value="300" min="50"></div><div class="form-group" style="flex:0"><label class="form-label">&nbsp;</label><button class="btn btn-green" onclick="planEVRoute()">FIND</button></div></div>
+      <div class="ev-stations" id="evStations"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-title"><div class="dot" style="background:var(--yellow)"></div>FUEL & COST ESTIMATION</div>
+      <div id="costEstimation"></div>
+    </div>
+  </div>
+  <div class="row2">
+    <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--purple)"></div>MULTI-STOP PLANNER</div><div id="multiStopPlanner"></div></div>
+    <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--cyan)"></div>DELIVERY ROUTE OPTIMIZER</div><div id="deliveryOptimizer"></div></div>
+  </div>
+</div>
+
+<!-- ===== PUBLIC TRANSPORT ===== -->
+<div class="section" id="sec-transport">
+  <div class="section-tabs">
+    <button class="stab active" onclick="showStab(this,'transport','buses')">Buses</button>
+    <button class="stab" onclick="showStab(this,'transport','metro')">Metro</button>
+    <button class="stab" onclick="showStab(this,'transport','trains')">Trains</button>
+    <button class="stab" onclick="showStab(this,'transport','tickets')">Tickets & Fares</button>
+    <button class="stab" onclick="showStab(this,'transport','analytics')">Analytics</button>
+  </div>
+  <div id="transport-buses">
+    <div class="row2">
+      <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--green)"></div>LIVE BUS TRACKING</div><div class="bus-list" id="busList"></div></div>
+      <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--cyan)"></div>BUS SCHEDULE & ARRIVALS</div><div id="busSchedule"></div></div>
+    </div>
+    <div class="panel row-full"><div class="panel-title"><div class="dot" style="background:var(--orange)"></div>OCCUPANCY MONITORING</div><div id="busOccupancy"></div></div>
+  </div>
+  <div id="transport-metro" style="display:none">
+    <div class="row2">
+      <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--purple)"></div>METRO LINES LIVE</div><div id="metroLines"></div></div>
+      <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--cyan)"></div>CROWD PREDICTION</div><div id="crowdPrediction"></div></div>
+    </div>
+  </div>
+  <div id="transport-trains" style="display:none">
+    <div class="panel row-full"><div class="panel-title"><div class="dot" style="background:var(--yellow)"></div>TRAIN TRACKING</div><div id="trainTracking"></div></div>
+  </div>
+  <div id="transport-tickets" style="display:none">
+    <div class="row2">
+      <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--green)"></div>DIGITAL TICKET BOOKING</div><div id="ticketBooking"></div></div>
+      <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--cyan)"></div>QR PASSES & FARE CALC</div><div id="fareCalc"></div></div>
+    </div>
+  </div>
+  <div id="transport-analytics" style="display:none">
+    <div class="row2">
+      <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--orange)"></div>TRANSIT DEMAND FORECAST</div><div class="chart-area"><canvas id="demandChart" class="chart"></canvas></div></div>
+      <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--cyan)"></div>LAST-MILE SUGGESTIONS</div><div id="lastMile"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PARKING ===== -->
+<div class="section" id="sec-parking">
+  <div class="row2">
+    <div class="panel" style="grid-column:1/-1">
+      <div class="panel-title"><div class="dot"></div>REAL-TIME PARKING AVAILABILITY</div>
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+        <input class="input" placeholder="Search parking near..." style="max-width:300px;" id="parkingSearch" oninput="filterParking()">
+        <select class="input" style="max-width:200px;" id="parkingFilter" onchange="filterParking()"><option>All</option><option>Available</option><option>EV Charging</option><option>Underground</option></select>
+        <button class="btn btn-cyan btn-sm" onclick="refreshParking()">↻ REFRESH</button>
+      </div>
+      <div class="parking-grid" id="parkingGrid"></div>
+    </div>
+  </div>
+  <div class="row2">
+    <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--green)"></div>SMART RESERVATIONS</div><div id="parkingReservation"></div></div>
+    <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--orange)"></div>ILLEGAL PARKING DETECTION</div><div id="illegalParking"></div></div>
+  </div>
+  <div class="row2">
+    <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--yellow)"></div>PRICE COMPARISON</div><div id="pricingComparison"></div></div>
+    <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--purple)"></div>PARKING ANALYTICS</div><div class="chart-area" style="height:140px"><canvas id="parkingChart" class="chart"></canvas></div></div>
+  </div>
+</div>
+
+<!-- ===== EMERGENCY ===== -->
+<div class="section" id="sec-emergency">
+  <div class="row3">
+    <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--red)"></div>SOS ALERT</div><div style="text-align:center;padding:20px 0;"><button class="btn btn-red" style="font-size:1.2rem;padding:16px 32px;width:100%;letter-spacing:3px;" onclick="triggerSOS()">🆘 SEND SOS</button><div style="font-size:.7rem;color:var(--text2);margin-top:10px;">Tap to alert emergency services</div></div></div>
+    <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--orange)"></div>ACCIDENT DETECTION</div><div id="accidentDetection"></div></div>
+    <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--cyan)"></div>EMERGENCY ROUTING</div><div id="emergencyRouting"></div></div>
+  </div>
+  <div class="row2">
+    <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--red)"></div>ACTIVE EMERGENCY VEHICLES</div><div id="emergencyVehicles"></div></div>
+    <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--yellow)"></div>EVACUATION ROUTES</div><div id="evacuationRoutes"></div></div>
+  </div>
+  <div class="panel row-full"><div class="panel-title"><div class="dot" style="background:var(--orange)"></div>ROAD HAZARD REPORTING</div><div id="hazardReporting"></div></div>
+</div>
+
+<!-- ===== ENVIRONMENT ===== -->
+<div class="section" id="sec-environment">
+  <div class="panel row-full">
+    <div class="panel-title"><div class="dot" style="background:var(--green)"></div>REAL-TIME ENVIRONMENTAL MONITORING</div>
+    <div class="gauge-grid" id="envGauges"></div>
+  </div>
+  <div class="row2">
+    <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--orange)"></div>POLLUTION HEATMAP</div><div class="heatmap-grid" id="pollutionHeatmap"></div></div>
+    <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--cyan)"></div>AQI TREND (24H)</div><div class="chart-area"><canvas id="aqiChart" class="chart"></canvas></div></div>
+  </div>
+  <div class="row3">
+    <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--green)"></div>CARBON TRACKING</div><div class="carbon-section" id="carbonSection"></div></div>
+    <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--cyan)"></div>WEATHER MONITOR</div><div id="weatherMonitor"></div></div>
+    <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--yellow)"></div>URBAN HEAT DETECTION</div><div id="urbanHeat"></div></div>
+  </div>
+</div>
+
+<!-- ===== CITIZEN ===== -->
+<div class="section" id="sec-citizen">
+  <div class="section-tabs">
+    <button class="stab active" onclick="showStab(this,'citizen','carpool')">Carpool</button>
+    <button class="stab" onclick="showStab(this,'citizen','rideshare')">Ride Share</button>
+    <button class="stab" onclick="showStab(this,'citizen','report')">Report Issue</button>
+    <button class="stab" onclick="showStab(this,'citizen','lost')">Lost Vehicle</button>
+    <button class="stab" onclick="showStab(this,'citizen','community')">Community</button>
+  </div>
+  <div id="citizen-carpool">
+    <div class="row2">
+      <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--purple)"></div>CARPOOL MATCHING</div><div class="carpool-list" id="carpoolList"></div></div>
+      <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--cyan)"></div>POST A RIDE</div><div id="postRide"></div></div>
+    </div>
+  </div>
+  <div id="citizen-rideshare" style="display:none">
+    <div class="panel row-full"><div class="panel-title"><div class="dot" style="background:var(--cyan)"></div>MOBILITY OPTIONS</div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Pickup</label><input class="input" placeholder="Your location" value="Current Location"></div><div class="form-group"><label class="form-label">Drop</label><input class="input" placeholder="Destination" value="Airport Terminal 2"></div></div>
+      <div class="share-options" id="shareOptions"></div>
+    </div>
+  </div>
+  <div id="citizen-report" style="display:none">
+    <div class="panel row-full"><div class="panel-title"><div class="dot" style="background:var(--orange)"></div>REPORT ROAD ISSUE</div>
+      <div class="report-form">
+        <div>
+          <div class="form-group" style="margin-bottom:10px;"><label class="form-label">Issue Type</label>
+            <select class="input" id="reportType"><option>🕳️ Pothole</option><option>🚗 Accident</option><option>⚡ Road Damage</option><option>🚦 Traffic Violation</option><option>💡 Street Light Out</option><option>🗑️ Debris on Road</option></select>
+          </div>
+          <div class="form-group" style="margin-bottom:10px;"><label class="form-label">Description</label><textarea class="input" rows="3" placeholder="Describe the issue..." style="resize:vertical;"></textarea></div>
+          <div class="form-group" style="margin-bottom:10px;"><label class="form-label">Severity</label>
+            <select class="input" id="reportSeverity"><option>🟢 Low</option><option>🟡 Medium</option><option>🔴 High</option><option>🚨 Critical</option></select>
+          </div>
+          <button class="btn btn-orange" onclick="submitReport()" style="width:100%">📍 SUBMIT REPORT</button>
+        </div>
+        <div>
+          <label class="form-label">Click Map to Pin Location</label>
+          <div class="report-map" id="reportMap" onclick="addReportPin(event)">
+            <span>Click to pin issue location</span>
+            <div class="report-pins" id="reportPins"></div>
+          </div>
+          <div id="reportHistory" style="margin-top:12px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="citizen-lost" style="display:none">
+    <div class="row2">
+      <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--red)"></div>REPORT LOST VEHICLE</div><div id="lostVehicleForm"></div></div>
+      <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--cyan)"></div>FOUND VEHICLES DATABASE</div><div id="foundVehicles"></div></div>
+    </div>
+  </div>
+  <div id="citizen-community" style="display:none">
+    <div class="row2">
+      <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--purple)"></div>COMMUNITY ALERTS</div><div id="communityAlerts"></div></div>
+      <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--green)"></div>CITY NOTIFICATIONS</div><div id="cityNotifications"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ANALYTICS ===== -->
+<div class="section" id="sec-analytics">
+  <div class="analytics-grid" id="analyticsMetrics"></div>
+  <div class="row2">
+    <div class="panel"><div class="panel-title"><div class="dot"></div>MOBILITY ANALYTICS</div><div class="chart-area" style="height:200px"><canvas id="mobilityChart" class="chart"></canvas></div></div>
+    <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--orange)"></div>ROAD USAGE BREAKDOWN</div><div class="chart-area" style="height:200px"><canvas id="usageChart" class="chart"></canvas></div></div>
+  </div>
+  <div class="panel row-full"><div class="panel-title"><div class="dot" style="background:var(--purple)"></div>INFRASTRUCTURE PLANNING INSIGHTS</div><div id="infraInsights"></div></div>
+  <div class="panel row-full"><div class="panel-title"><div class="dot" style="background:var(--green)"></div>DRIVING SCORE ANALYTICS</div><div id="drivingScores"></div></div>
+</div>
+
+<!-- ===== ADVANCED ===== -->
+<div class="section" id="sec-advanced">
+  <div class="section-tabs">
+    <button class="stab active" onclick="showStab(this,'advanced','twin')">Digital Twin</button>
+    <button class="stab" onclick="showStab(this,'advanced','autonomous')">Autonomous</button>
+    <button class="stab" onclick="showStab(this,'advanced','drones')">Drone Monitor</button>
+    <button class="stab" onclick="showStab(this,'advanced','tolls')">Smart Tolls</button>
+    <button class="stab" onclick="showStab(this,'advanced','pricing')">Congestion Pricing</button>
+    <button class="stab" onclick="showStab(this,'advanced','logistics')">Logistics Hubs</button>
+  </div>
+  <div id="advanced-twin">
+    <div class="panel row-full"><div class="panel-title"><div class="dot" style="background:var(--cyan)"></div>AI CITY DIGITAL TWIN SIMULATION</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+        <button class="btn btn-cyan btn-sm" onclick="twinSimulate('rush')">RUSH HOUR SIM</button>
+        <button class="btn btn-orange btn-sm" onclick="twinSimulate('event')">EVENT SIM</button>
+        <button class="btn btn-red btn-sm" onclick="twinSimulate('emergency')">EMERGENCY SIM</button>
+        <button class="btn btn-green btn-sm" onclick="twinSimulate('normal')">NORMAL MODE</button>
+        <select class="input btn-sm" style="width:auto;" id="twinSpeed"><option value="1">1x Speed</option><option value="2">2x Speed</option><option value="5">5x Speed</option></select>
+      </div>
+      <div class="twin-canvas" id="twinCanvas"></div>
+      <div class="twin-stats-overlay" id="twinStats">
+        <div class="twin-stat-row"><span class="k">Mode:</span><span class="v" id="twinMode" style="color:var(--green)">NORMAL</span></div>
+        <div class="twin-stat-row"><span class="k">Vehicles:</span><span class="v" id="twinVehicleCount" style="color:var(--cyan)">0</span></div>
+        <div class="twin-stat-row"><span class="k">Avg Speed:</span><span class="v" id="twinAvgSpeed" style="color:var(--yellow)">0 km/h</span></div>
+        <div class="twin-stat-row"><span class="k">Congestion:</span><span class="v" id="twinCongestion" style="color:var(--orange)">0%</span></div>
+      </div>
+    </div>
+  </div>
+  <div id="advanced-autonomous" style="display:none">
+    <div class="panel row-full"><div class="panel-title"><div class="dot" style="background:var(--cyan)"></div>AUTONOMOUS VEHICLE FLEET</div>
+      <div class="av-grid" id="avGrid"></div>
+    </div>
+  </div>
+  <div id="advanced-drones" style="display:none">
+    <div class="panel row-full"><div class="panel-title"><div class="dot" style="background:var(--purple)"></div>DRONE TRAFFIC MONITORING FLEET</div>
+      <div class="drone-grid" id="droneGrid"></div>
+    </div>
+  </div>
+  <div id="advanced-tolls" style="display:none">
+    <div class="panel row-full"><div class="panel-title"><div class="dot" style="background:var(--yellow)"></div>SMART TOLL SYSTEMS</div>
+      <div class="toll-list" id="tollList"></div>
+    </div>
+  </div>
+  <div id="advanced-pricing" style="display:none">
+    <div class="panel row-full"><div class="panel-title"><div class="dot" style="background:var(--orange)"></div>DYNAMIC CONGESTION PRICING</div>
+      <div style="font-size:.75rem;color:var(--text2);margin-bottom:12px;">Prices auto-adjust based on real-time demand. Currently: <span id="pricingPeriod" style="color:var(--yellow)">PEAK HOURS</span></div>
+      <div class="pricing-grid" id="pricingGrid"></div>
+    </div>
+  </div>
+  <div id="advanced-logistics" style="display:none">
+    <div class="panel row-full"><div class="panel-title"><div class="dot" style="background:var(--green)"></div>SMART LOGISTICS HUBS</div><div id="logisticsHubs"></div></div>
+  </div>
+</div>
+
+<!-- ===== SETTINGS ===== -->
+<div class="section" id="sec-settings">
+  <div class="row2">
+    <div class="panel"><div class="panel-title"><div class="dot"></div>USER PREFERENCES</div><div id="userPrefs"></div></div>
+    <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--green)"></div>NOTIFICATION SETTINGS</div><div id="notifSettings"></div></div>
+  </div>
+  <div class="row2">
+    <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--orange)"></div>COMMUTE REMINDERS</div><div id="commuteReminders"></div></div>
+    <div class="panel"><div class="panel-title"><div class="dot" style="background:var(--cyan)"></div>LANGUAGE & OFFLINE</div><div id="langOffline"></div></div>
+  </div>
+  <div class="panel row-full"><div class="panel-title"><div class="dot" style="background:var(--purple)"></div>VEHICLE PROFILE & DRIVING SCORE</div><div id="vehicleProfile"></div></div>
+</div>
+
+</div><!-- end app -->
+
+<!-- MODAL -->
+<div class="modal" id="mainModal">
+  <div class="modal-box">
+    <div class="modal-title" id="modalTitle"></div>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
+<script>
+// ==================== CORE STATE ====================
+const S = {
+  vehicles: [], buses: [], trafficLights: [], parkingLots: [], alerts: [],
+  envData: {}, twinVehicles: [], avFleet: [], drones: [],
+  darkMode: false, voiceActive: false, mapZoom: 1, twinMode: 'normal',
+  reports: [], carpoolMatches: [], selectedLayer: {vehicles:true,buses:true,incidents:true,heatmap:false},
+  scores: {daily_score:87, co2_saved:12.4, fuel_saved:8.2},
+};
+
+// ==================== NAV SETUP ====================
+const NAV_SECTIONS = [
+  {id:'dashboard',label:'🏙️ Dashboard'},
+  {id:'traffic',label:'🚦 Traffic'},
+  {id:'navigation',label:'🗺️ Navigation'},
+  {id:'transport',label:'🚌 Transport'},
+  {id:'parking',label:'🅿️ Parking'},
+  {id:'emergency',label:'🆘 Emergency'},
+  {id:'environment',label:'🌿 Environment'},
+  {id:'citizen',label:'👥 Citizen'},
+  {id:'analytics',label:'📊 Analytics'},
+  {id:'advanced',label:'🤖 Advanced'},
+  {id:'settings',label:'⚙️ Settings'},
+];
+function buildNav(){
+  const container = document.getElementById('navTabs');
+  NAV_SECTIONS.forEach(n => {
+    const btn = document.createElement('button');
+    btn.className = 'nav-tab' + (n.id==='dashboard'?' active':'');
+    btn.textContent = n.label;
+    btn.onclick = () => switchSection(n.id, btn);
+    container.appendChild(btn);
+  });
+}
+function switchSection(id, btn){
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  btn.classList.add('active');
+  // lazy init
+  if(id==='analytics') renderAnalytics();
+  if(id==='advanced') renderAdvanced();
+  if(id==='environment') renderEnv();
+}
+function showStab(btn, section, tab){
+  const parent = document.getElementById('sec-'+section) || document;
+  parent.querySelectorAll('.stab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  // hide all, show selected
+  const tabs = {
+    traffic:['monitoring','lights','incidents','prediction','cameras'],
+    transport:['buses','metro','trains','tickets','analytics'],
+    citizen:['carpool','rideshare','report','lost','community'],
+    advanced:['twin','autonomous','drones','tolls','pricing','logistics']
+  };
+  if(tabs[section]){
+    tabs[section].forEach(t => {
+      const el = document.getElementById(section+'-'+t);
+      if(el) el.style.display = t===tab?'block':'none';
+    });
+  }
+  if(section==='traffic' && tab==='prediction') renderPredictionChart();
+  if(section==='traffic' && tab==='cameras') renderCameras();
+  if(section==='transport' && tab==='analytics') renderDemandChart();
+}
+
+// ==================== DATA GENERATORS ====================
+function rand(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function randF(a,b){return +(Math.random()*(b-a)+a).toFixed(1);}
+function choice(arr){return arr[rand(0,arr.length-1)];}
+const ROAD_NAMES = ['Main St','Park Ave','Oak Blvd','1st Ave','Broadway','Harbor Rd','Tech Pkwy','Central Dr','Ring Rd','North Expy'];
+const AREAS = ['Downtown','Midtown','North District','East Quarter','Tech Park','Harbor Area','Suburb West','Airport Zone','Old Town','New City'];
+
+function generateVehicles(n=60){
+  S.vehicles = Array.from({length:n},(_,i)=>({
+    id:i, x:rand(5,95), y:rand(5,95),
+    dx:randF(-0.3,0.3), dy:randF(-0.2,0.2),
+    type:choice(['car','car','car','car','bus','emergency']),
+    speed:rand(20,90)
+  }));
+}
+function generateBuses(){
+  const routes = [
+    {num:'101',from:'Central Stn',to:'Airport T2',stops:12},
+    {num:'205',from:'Harbor',to:'Tech Park',stops:8},
+    {num:'310',from:'Old Town',to:'University',stops:15},
+    {num:'412',from:'Mall',to:'Hospital',stops:7},
+    {num:'520',from:'Stadium',to:'Downtown',stops:10},
+    {num:'618',from:'North Gate',to:'South Bay',stops:11},
+  ];
+  S.buses = routes.map((r,i)=>({
+    ...r, id:i, eta:rand(1,12), occupancy:rand(10,95),
+    lat:rand(5,95), lng:rand(5,95), delay:rand(-2,8),
+    seats:rand(20,50), capacity:50
+  }));
+}
+function generateTrafficLights(){
+  const intersections = ['Main/1st','Park/Oak','Tech/Ring','Harbor/Blvd','Airport/Pkwy','Central/Ave','North/2nd','East/3rd','Market/4th','Stadium/5th','Mall/Drive','Bridge/St'];
+  S.trafficLights = intersections.map((name,i)=>({
+    id:i, name, phase:choice(['red','green','yellow']),
+    timer:rand(5,60), mode:choice(['normal','ai','pedestrian','emergency']),
+    waiting:rand(0,25)
+  }));
+}
+function generateParking(){
+  const lots = ['City Center P1','Mall Garage','Tech Park P2','Harbor Lot A','Airport P3','Central Park','Stadium Lot','Hospital P4','Old Town Sq','North Plaza','South Bay P5','East Market'];
+  S.parkingLots = lots.map((name,i)=>({
+    id:i, name, total:rand(100,500),
+    available:rand(0,100), price:randF(20,80),
+    ev:choice([true,false,false]), underground:choice([true,false]),
+    reserved:rand(0,20)
+  }));
+}
+function generateAlerts(){
+  const types = [
+    {t:'critical',icon:'🚨',title:'Major Accident',desc:'Multi-vehicle collision on Highway 5, 2 lanes blocked'},
+    {t:'warning',icon:'⚠️',title:'Heavy Congestion',desc:'Peak traffic on Main Street - 45 min delay expected'},
+    {t:'info',icon:'🔵',title:'Construction Zone',desc:'Road works on Park Avenue until 18:00'},
+    {t:'warning',icon:'🌧️',title:'Weather Alert',desc:'Heavy rain forecast affecting visibility on Ring Road'},
+    {t:'critical',icon:'🔥',title:'Road Closure',desc:'Bridge Road closed due to emergency maintenance'},
+    {t:'info',icon:'🎉',title:'Event Traffic',desc:'Stadium event tonight - expect delays 6-9 PM'},
+    {t:'success',icon:'✅',title:'Incident Cleared',desc:'Harbor Road reopened - traffic flow restored'},
+    {t:'warning',icon:'🚧',title:'Pothole Alert',desc:'Large pothole reported on Oak Boulevard'},
+  ];
+  S.alerts = types.map((a,i)=>({...a, time:rand(1,120)+'m ago', id:i}));
+}
+function generateEnv(){
+  S.envData = {
+    aqi:{value:rand(40,150),unit:'AQI',name:'Air Quality'},
+    noise:{value:rand(45,85),unit:'dB',name:'Noise Level'},
+    temp:{value:rand(20,38),unit:'°C',name:'Temperature'},
+    humidity:{value:rand(30,90),unit:'%',name:'Humidity'},
+    wind:{value:rand(5,40),unit:'km/h',name:'Wind Speed'},
+    pm25:{value:randF(10,80),unit:'μg/m³',name:'PM2.5'},
+    co2:{value:rand(380,600),unit:'ppm',name:'CO₂'},
+    uhi:{value:randF(1,5),unit:'°C',name:'Urban Heat Island'},
+  };
+}
+
+// ==================== MAP ====================
+function renderMap(){
+  const canvas = document.getElementById('map-canvas');
+  canvas.querySelectorAll('.map-road,.map-vehicle,.map-incident,.map-label').forEach(e=>e.remove());
+  const w = canvas.offsetWidth, h = canvas.offsetHeight;
+  // roads horizontal
+  [15,30,50,68,82].forEach(pct=>{
+    const road = document.createElement('div');
+    road.className = 'map-road h '+(pct===50?'congested':pct===30?'moderate':'clear');
+    road.style.cssText = `left:0;right:0;top:${pct}%;height:${pct===50?'4px':'3px'}`;
+    canvas.appendChild(road);
+  });
+  // roads vertical
+  [12,28,45,60,78,92].forEach(pct=>{
+    const road = document.createElement('div');
+    road.className = 'map-road v '+(pct===45?'congested':pct===60?'moderate':'clear');
+    road.style.cssText = `top:0;bottom:0;left:${pct}%;width:3px`;
+    canvas.appendChild(road);
+  });
+  // labels
+  ROAD_NAMES.slice(0,5).forEach((name,i)=>{
+    const lbl = document.createElement('div');
+    lbl.className = 'map-label';
+    lbl.textContent = name;
+    lbl.style.cssText = `left:2%;top:${[14,29,49,67,81][i]}%`;
+    canvas.appendChild(lbl);
+  });
+  // vehicles
+  S.vehicles.filter(v=>S.selectedLayer.vehicles||v.type==='bus'||v.type==='emergency').forEach(v=>{
+    if((v.type==='bus'&&!S.selectedLayer.buses)||(v.type==='car'&&!S.selectedLayer.vehicles)) return;
+    const el = document.createElement('div');
+    el.className = `map-vehicle ${v.type}`;
+    el.style.cssText = `left:${v.x}%;top:${v.y}%;position:absolute`;
+    el.title = `${v.type.toUpperCase()} | ${v.speed}km/h`;
+    canvas.appendChild(el);
+  });
+  // incidents
+  if(S.selectedLayer.incidents){
+    [[30,50],[60,30],[80,65],[20,70]].forEach(([x,y])=>{
+      const inc = document.createElement('div');
+      inc.className = 'map-incident';
+      inc.style.cssText = `left:${x}%;top:${y}%;position:absolute`;
+      inc.title = 'Incident: Click for details';
+      inc.onclick = ()=>showModal('⚠️ INCIDENT REPORT','<p>Type: Traffic Accident<br>Location: '+choice(ROAD_NAMES)+'<br>Severity: '+choice(['Minor','Moderate','Severe'])+'<br>Emergency dispatched: '+choice(['Yes','Pending'])+'<br>Est. clearance: '+rand(10,90)+' min</p>');
+      canvas.appendChild(inc);
+    });
+  }
+  // overlay stats
+  const cars = S.vehicles.filter(v=>v.type==='car').length;
+  document.getElementById('mapVehicles').textContent = cars;
+  document.getElementById('mapCongested').textContent = rand(3,8);
+  document.getElementById('mapIncidents').textContent = S.selectedLayer.incidents?4:0;
+}
+function animateVehicles(){
+  const canvas = document.getElementById('map-canvas');
+  S.vehicles.forEach(v=>{
+    v.x = Math.max(2,Math.min(98, v.x + v.dx * (rand(1,3)/1)));
+    v.y = Math.max(2,Math.min(98, v.y + v.dy * (rand(1,3)/1)));
+    if(v.x<=2||v.x>=98) v.dx*=-1;
+    if(v.y<=2||v.y>=98) v.dy*=-1;
+  });
+  const els = canvas.querySelectorAll('.map-vehicle');
+  S.vehicles.forEach((v,i)=>{if(els[i]){els[i].style.left=v.x+'%';els[i].style.top=v.y+'%';}});
+}
+function mapZoom(d){
+  S.mapZoom = Math.max(0.5,Math.min(2,S.mapZoom+d*0.2));
+  document.getElementById('map-canvas').style.transform = `scale(${S.mapZoom})`;
+  showToast(`Zoom: ${Math.round(S.mapZoom*100)}%`,'info');
+}
+function toggleLayer(layer){
+  S.selectedLayer[layer] = !S.selectedLayer[layer];
+  renderMap(); showToast(`Layer ${layer}: ${S.selectedLayer[layer]?'ON':'OFF'}`,'info');
+}
+
+// ==================== HEATMAP ====================
+function renderHeatmap(containerId){
+  const grid = document.getElementById(containerId);
+  if(!grid) return;
+  grid.innerHTML = '';
+  const levels = ['#00ff9d','#80ff00','#ffd700','#ff8c00','#ff3366'];
+  for(let i=0;i<200;i++){
+    const cell = document.createElement('div');
+    cell.className = 'heat-cell';
+    const level = rand(0,4);
+    cell.style.background = levels[level];
+    cell.style.opacity = 0.15+level*0.17;
+    cell.title = ['Low','Moderate','High','Very High','Critical'][level]+' traffic density';
+    grid.appendChild(cell);
+  }
+}
+
+// ==================== CHART ====================
+function drawLineChart(canvasId, labels, datasets, options={}){
+  const canvas = document.getElementById(canvasId);
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.offsetWidth, h = canvas.offsetHeight;
+  canvas.width = w; canvas.height = h;
+  ctx.clearRect(0,0,w,h);
+  // grid
+  ctx.strokeStyle = 'rgba(0,200,255,0.08)'; ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){const y=h*i/4;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+  const allVals = datasets.flatMap(d=>d.data);
+  const minV = Math.min(...allVals)*.9, maxV = Math.max(...allVals)*1.05;
+  const toX=i=>(i/(labels.length-1))*w;
+  const toY=v=>h-(((v-minV)/(maxV-minV||1))*h*.8+h*.1);
+  datasets.forEach(ds=>{
+    // fill
+    ctx.beginPath(); ctx.moveTo(toX(0),h);
+    ds.data.forEach((v,i)=>ctx.lineTo(toX(i),toY(v)));
+    ctx.lineTo(toX(ds.data.length-1),h); ctx.closePath();
+    ctx.fillStyle = ds.fill||'rgba(0,200,255,0.05)'; ctx.fill();
+    // line
+    ctx.beginPath();
+    ds.data.forEach((v,i)=>i===0?ctx.moveTo(toX(i),toY(v)):ctx.lineTo(toX(i),toY(v)));
+    ctx.strokeStyle = ds.color||'#00c8ff'; ctx.lineWidth=2; ctx.stroke();
+    // dots
+    ds.data.forEach((v,i)=>{ctx.beginPath();ctx.arc(toX(i),toY(v),3,0,Math.PI*2);ctx.fillStyle=ds.color||'#00c8ff';ctx.fill();});
+  });
+  // x labels
+  if(options.xLabels){
+    ctx.fillStyle='rgba(100,138,170,0.8)'; ctx.font='9px JetBrains Mono'; ctx.textAlign='center';
+    labels.forEach((l,i)=>{if(i%Math.ceil(labels.length/8)===0)ctx.fillText(l,toX(i),h-2);});
+  }
+}
+function renderTrafficChart(){
+  const hours = Array.from({length:24},(_,i)=>i+':00');
+  const data = [120,80,60,50,70,150,350,680,820,750,600,580,620,700,650,720,850,920,780,600,450,300,200,150];
+  drawLineChart('trafficChart',hours,[{data,color:'#00c8ff',fill:'rgba(0,200,255,0.08)'}],{xLabels:true});
+  const peak = data.indexOf(Math.max(...data));
+  document.getElementById('peakInfo').innerHTML = `<span class="tag tag-orange">Peak: ${hours[peak]} (${data[peak]} vehicles/min)</span> <span class="tag tag-green">Off-Peak: 04:00 (${data[3]} vehicles/min)</span>`;
+}
+
+// ==================== STATS GRID ====================
+function renderStats(){
+  const stats = [
+    {icon:'🚗',label:'Total Vehicles',value:rand(12000,18000).toLocaleString(),change:'+'+rand(2,8)+'%',dir:'up'},
+    {icon:'⏱️',label:'Avg Travel Time',value:rand(22,45)+'min',change:'+'+rand(5,15)+'%',dir:'warn'},
+    {icon:'🚦',label:'Congestion Level',value:rand(35,75)+'%',change:rand(0,1)?'+'+rand(1,12)+'%':'-'+rand(1,5)+'%',dir:'warn'},
+    {icon:'🅿️',label:'Parking Available',value:rand(800,2400).toLocaleString(),change:'-'+rand(5,20)+'%',dir:'down'},
+    {icon:'🚌',label:'Buses On Time',value:rand(72,95)+'%',change:'+'+rand(1,6)+'%',dir:'up'},
+    {icon:'⚡',label:'EV Stations Free',value:rand(40,120)+'',change:'-'+rand(1,10)+'',dir:'down'},
+    {icon:'🌿',label:'Air Quality (AQI)',value:rand(40,120)+'',change:rand(0,1)?'+'+rand(1,15):'-'+rand(1,10),dir:'up'},
+    {icon:'🆘',label:'Active Incidents',value:rand(2,12)+'',change:'+'+rand(0,3),dir:'down'},
+    {icon:'🚁',label:'Drones Active',value:rand(6,18)+'',change:'Live',dir:'up'},
+    {icon:'♻️',label:'CO₂ Saved Today',value:randF(2,8)+'t',change:'+'+randF(0.1,0.5)+'t',dir:'up'},
+  ];
+  const grid = document.getElementById('statsGrid');
+  grid.innerHTML = stats.map(s=>`<div class="stat-card" onclick="showToast('${s.label}: ${s.value}','info')"><div class="stat-icon">${s.icon}</div><div class="stat-label">${s.label}</div><div class="stat-value" style="color:var(--cyan)">${s.value}</div><div class="stat-change ${s.dir}">${s.change}</div></div>`).join('');
+}
+
+// ==================== ALERTS ====================
+function renderAlerts(){
+  const list = document.getElementById('alertsList');
+  list.innerHTML = S.alerts.map(a=>`<div class="alert-item ${a.t}" id="alert-${a.id}">
+    <div class="alert-icon">${a.icon}</div>
+    <div class="alert-text"><div class="title">${a.title}</div><div class="desc">${a.desc}</div><div class="time">${a.time}</div></div>
+    <button class="alert-dismiss" onclick="dismissAlert(${a.id})">✕</button>
+  </div>`).join('');
+}
+function dismissAlert(id){
+  S.alerts = S.alerts.filter(a=>a.id!==id);
+  const el = document.getElementById('alert-'+id);
+  if(el){el.style.opacity='0';el.style.transform='translateX(20px)';setTimeout(()=>el.remove(),300);}
+  showToast('Alert dismissed','success');
+}
+
+// ==================== ROAD USAGE ====================
+function renderRoadUsage(){
+  const el = document.getElementById('roadUsage');
+  el.innerHTML = ROAD_NAMES.map(r=>{
+    const pct=rand(10,95);
+    const col = pct>75?'var(--red)':pct>50?'var(--orange)':'var(--green)';
+    return `<div class="progress-row"><div class="progress-label"><span>${r}</span><span style="color:${col}">${pct}%</span></div><div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:${col}"></div></div></div>`;
+  }).join('');
+}
+
+// ==================== TRAFFIC LIGHTS ====================
+function renderTrafficLights(){
+  const grid = document.getElementById('trafficLightsGrid');
+  if(!grid) return;
+  grid.innerHTML = S.trafficLights.map(tl=>`
+    <div class="tl-box" id="tl-${tl.id}">
+      <div class="tl-id">INT-${String(tl.id+1).padStart(3,'0')}</div>
+      <div style="font-size:.65rem;color:var(--text2);margin-bottom:4px">${tl.name}</div>
+      <div class="tl-lights">
+        <div class="tl-light red ${tl.phase==='red'?'active':''}" id="tl-red-${tl.id}"></div>
+        <div class="tl-light yellow ${tl.phase==='yellow'?'active':''}" id="tl-yel-${tl.id}"></div>
+        <div class="tl-light green ${tl.phase==='green'?'active':''}" id="tl-grn-${tl.id}"></div>
+      </div>
+      <div class="tl-timer" id="tl-timer-${tl.id}" style="color:${tl.phase==='red'?'var(--red)':tl.phase==='green'?'var(--green)':'var(--yellow)'}">${tl.timer}s</div>
+      <div class="tl-mode">${tl.mode.toUpperCase()}</div>
+      <div style="font-size:.6rem;color:var(--text2);margin-top:4px">⏳ ${tl.waiting} waiting</div>
+    </div>`).join('');
+}
+function setAllLights(mode){
+  S.trafficLights.forEach(tl=>tl.mode=mode);
+  renderTrafficLights();
+  const msgs = {optimize:'AI optimizing all intersections 🤖',emergency:'Emergency green corridors activated 🚨',pedestrian:'Pedestrian crossing mode enabled 🚶',night:'Night optimization mode active 🌙'};
+  showToast(msgs[mode],'success');
+}
+function cycleTrafficLights(){
+  S.trafficLights.forEach(tl=>{
+    tl.timer--;
+    if(tl.timer<=0){
+      const phases = ['red','green','yellow'];
+      const cur = phases.indexOf(tl.phase);
+      tl.phase = phases[(cur+1)%3];
+      tl.timer = tl.phase==='green'?rand(20,45):tl.phase==='yellow'?rand(3,5):rand(15,35);
+    }
+    const redEl = document.getElementById('tl-red-'+tl.id);
+    const yelEl = document.getElementById('tl-yel-'+tl.id);
+    const grnEl = document.getElementById('tl-grn-'+tl.id);
+    const timerEl = document.getElementById('tl-timer-'+tl.id);
+    if(redEl){redEl.classList.toggle('active',tl.phase==='red');yelEl.classList.toggle('active',tl.phase==='yellow');grnEl.classList.toggle('active',tl.phase==='green');}
+    if(timerEl){timerEl.textContent=tl.timer+'s';timerEl.style.color=tl.phase==='red'?'var(--red)':tl.phase==='green'?'var(--green)':'var(--yellow)';}
+  });
+}
+
+// ==================== PARKING ====================
+function renderParking(){
+  const grid = document.getElementById('parkingGrid');
+  if(!grid) return;
+  grid.innerHTML = S.parkingLots.map(lot=>{
+    const pct = ((lot.total-lot.available)/lot.total*100);
+    const status = pct>80?'full':pct>50?'moderate':'available';
+    const col = status==='available'?'var(--green)':status==='moderate'?'var(--orange)':'var(--red)';
+    return `<div class="parking-lot ${status}" onclick="reserveParking(${lot.id})">
+      <div class="parking-name">${lot.name}</div>
+      <div class="parking-count" style="color:${col}">${lot.available}</div>
+      <div class="parking-total">of ${lot.total} free</div>
+      <div class="parking-bar"><div class="parking-fill" style="width:${pct}%;background:${col}"></div></div>
+      <div class="parking-price">₹${lot.price}/hr</div>
+      ${lot.ev?'<div class="parking-ev">⚡ EV Charging</div>':''}
+    </div>`;
+  }).join('');
+}
+function reserveParking(id){
+  const lot = S.parkingLots.find(l=>l.id===id);
+  if(!lot) return;
+  showModal('🅿️ RESERVE PARKING',`
+    <p style="margin-bottom:12px"><strong>${lot.name}</strong></p>
+    <p>Available: <strong style="color:var(--green)">${lot.available}</strong> / ${lot.total}</p>
+    <p>Price: <strong style="color:var(--yellow)">₹${lot.price}/hr</strong></p>
+    ${lot.ev?'<p style="color:var(--green)">⚡ EV Charging Available</p>':''}
+    <div style="margin:12px 0">
+      <label class="form-label">Duration (hours)</label>
+      <input class="input" type="number" value="2" min="1" max="24" id="parkHours">
+    </div>
+    <button class="btn btn-cyan" onclick="confirmParking(${id})" style="width:100%;margin-top:8px">CONFIRM RESERVATION</button>
+  `);
+}
+function confirmParking(id){
+  const hours = document.getElementById('parkHours')?.value||2;
+  const lot = S.parkingLots.find(l=>l.id===id);
+  if(lot&&lot.available>0){lot.available--;renderParking();}
+  closeModal();
+  showToast(`Parking reserved! QR code sent to your app 🎉`,'success');
+}
+function filterParking(){
+  const search = document.getElementById('parkingSearch')?.value.toLowerCase()||'';
+  const filter = document.getElementById('parkingFilter')?.value||'All';
+  S.parkingLots.forEach(lot=>{
+    const el = document.querySelector(`[onclick="reserveParking(${lot.id})"]`);
+    if(!el) return;
+    const nameMatch = lot.name.toLowerCase().includes(search);
+    const filterMatch = filter==='All'||(filter==='Available'&&lot.available>0)||(filter==='EV Charging'&&lot.ev)||(filter==='Underground'&&lot.underground);
+    el.style.display = nameMatch&&filterMatch?'':'none';
+  });
+}
+function refreshParking(){
+  S.parkingLots.forEach(lot=>{lot.available=rand(0,lot.total*.6|0);});
+  renderParking();
+  showToast('Parking data refreshed','success');
+}
+
+// ==================== BUSES ====================
+function renderBuses(){
+  const list = document.getElementById('busList');
+  if(!list) return;
+  list.innerHTML = S.buses.map(b=>{
+    const occ = b.occupancy>80?'occ-high':b.occupancy>50?'occ-med':'occ-low';
+    const occLabel = b.occupancy>80?'Crowded':b.occupancy>50?'Moderate':'Spacious';
+    return `<div class="bus-item" onclick="showBusDetail(${b.id})">
+      <div class="bus-num">${b.num}</div>
+      <div class="bus-info"><div class="bus-route">${b.from} → ${b.to}</div><div class="bus-status">${b.stops} stops • ${b.delay>0?'+'+b.delay+'min delay':'On time'}</div></div>
+      <div style="text-align:right"><div class="bus-eta" style="color:var(--green)">${b.eta}min</div><div class="bus-occ ${occ}">${occLabel}</div></div>
+    </div>`;
+  }).join('');
+}
+function showBusDetail(id){
+  const b = S.buses.find(bus=>bus.id===id);
+  if(!b) return;
+  showModal(`🚌 BUS ${b.num} DETAILS`,`
+    <p><strong>Route:</strong> ${b.from} → ${b.to}</p>
+    <p><strong>Stops:</strong> ${b.stops}</p>
+    <p><strong>Occupancy:</strong> ${b.occupancy}% (${b.seats} seats available)</p>
+    <p><strong>Next Arrival:</strong> ${b.eta} minutes</p>
+    <p><strong>Status:</strong> ${b.delay>0?'<span style="color:var(--orange)">+'+b.delay+' min delay</span>':'<span style="color:var(--green)">On Time</span>'}</p>
+    <button class="btn btn-green" onclick="bookTicket(${id});closeModal()" style="width:100%;margin-top:12px">🎫 BOOK TICKET</button>
+  `);
+}
+function bookTicket(busId){
+  showToast(`Ticket booked! QR code generated 🎫`,'success');
+}
+
+// ==================== ENV ====================
+function renderEnv(){
+  const grid = document.getElementById('envGauges');
+  if(!grid) return;
+  const entries = Object.entries(S.envData);
+  grid.innerHTML = entries.map(([key,d])=>{
+    const pct = Math.min(100,(d.value/200)*100);
+    const status = pct<33?'good':pct<66?'moderate':'bad';
+    const statusLabel = pct<33?'Good':pct<66?'Moderate':'Poor';
+    const col = pct<33?'var(--green)':pct<66?'var(--orange)':'var(--red)';
+    return `<div class="gauge-box">
+      <div class="gauge-name">${d.name}</div>
+      <div class="gauge-value" style="color:${col}">${d.value}</div>
+      <div class="gauge-unit">${d.unit}</div>
+      <div class="gauge-status status-${status}">${statusLabel}</div>
+    </div>`;
+  }).join('');
+  renderPollutionMap();
+  renderCarbonSection();
+  renderWeather();
+  renderUrbanHeat();
+  if(document.getElementById('aqiChart')) drawAQIChart();
+}
+function renderPollutionMap(){
+  renderHeatmap('pollutionHeatmap');
+}
+function renderCarbonSection(){
+  const el = document.getElementById('carbonSection');
+  if(!el) return;
+  const saved = S.scores.co2_saved;
+  el.innerHTML = `<div class="carbon-big">${saved}t</div><div class="carbon-label">CO₂ Saved Today</div>
+  <div style="margin-top:16px">
+    ${[['🚌 Public Transport','4.2t'],['🚲 Cycling','1.8t'],['⚡ EV Usage','3.6t'],['🚗 Carpooling','2.8t']].map(([l,v])=>
+    `<div class="progress-row"><div class="progress-label"><span>${l}</span><span style="color:var(--green)">${v}</span></div><div class="progress-track"><div class="progress-fill" style="width:${rand(30,90)}%;background:var(--green)"></div></div></div>`
+    ).join('')}
+  </div>`;
+}
+function renderWeather(){
+  const el = document.getElementById('weatherMonitor');
+  if(!el) return;
+  const conditions = ['☀️ Sunny','🌤️ Partly Cloudy','🌦️ Light Rain','⛅ Overcast','🌧️ Heavy Rain'];
+  el.innerHTML = `
+    <div style="text-align:center;padding:10px 0">
+      <div style="font-size:3rem">${choice(['☀️','🌤️','⛅'])}</div>
+      <div style="font-family:Orbitron,sans-serif;font-size:2rem;font-weight:700;color:var(--cyan)">${S.envData.temp?.value||28}°C</div>
+      <div style="color:var(--text2);font-size:.8rem;margin-top:4px">${choice(conditions)}</div>
+    </div>
+    <div style="margin-top:10px">
+      <div class="progress-row"><div class="progress-label"><span>💧 Humidity</span><span>${S.envData.humidity?.value||65}%</span></div><div class="progress-track"><div class="progress-fill" style="width:${S.envData.humidity?.value||65}%;background:var(--cyan)"></div></div></div>
+      <div class="progress-row"><div class="progress-label"><span>💨 Wind</span><span>${S.envData.wind?.value||15} km/h</span></div><div class="progress-track"><div class="progress-fill" style="width:${Math.min(100,(S.envData.wind?.value||15)/60*100)}%;background:var(--purple)"></div></div></div>
+    </div>
+    <div style="margin-top:8px;font-size:.7rem;color:var(--orange);">⚠️ Weather-aware routing: Rainy conditions expected tonight - plan early</div>`;
+}
+function renderUrbanHeat(){
+  const el = document.getElementById('urbanHeat');
+  if(!el) return;
+  el.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    ${AREAS.slice(0,6).map(a=>{const t=randF(26,42);return `<div style="background:rgba(255,140,0,.06);border:1px solid rgba(255,140,0,.15);border-radius:6px;padding:8px;text-align:center"><div style="font-size:.65rem;color:var(--text2)">${a}</div><div style="font-family:Orbitron,sans-serif;font-size:1rem;font-weight:700;color:${t>38?'var(--red)':t>32?'var(--orange)':'var(--yellow)'}">${t}°C</div></div>`;}).join('')}
+  </div>`;
+}
+function drawAQIChart(){
+  const hours = Array.from({length:24},(_,i)=>i+':00');
+  const data = hours.map(()=>rand(30,160));
+  drawLineChart('aqiChart',hours,[{data,color:'#00ff9d',fill:'rgba(0,255,157,0.05)'}],{xLabels:true});
+}
+
+// ==================== ROUTE PLANNER ====================
+function planRoute(){
+  const from = document.getElementById('routeFrom').value;
+  const to = document.getElementById('routeTo').value;
+  const mode = document.getElementById('routeMode').value;
+  const avoidAcc = document.getElementById('avoidAccident').checked;
+  const avoidWork = document.getElementById('avoidWork').checked;
+  const dist = randF(5,25);
+  const time = rand(10,50);
+  const fuel = +(dist*0.08).toFixed(1);
+  const steps = [`🚗 Head ${choice(['north','south','east','west'])} on ${choice(ROAD_NAMES)}`,`↱ Turn right onto ${choice(ROAD_NAMES)}`,`Continue for ${randF(1,5)}km`,`↰ Turn left at ${choice(AREAS)} intersection`,`🏁 Arrive at ${to}`];
+  document.getElementById('routeResult').innerHTML = `
+    <div class="route-result">
+      <div style="display:flex;gap:12px;margin-bottom:10px;flex-wrap:wrap">
+        <span class="tag tag-cyan">🗺️ ${dist}km</span>
+        <span class="tag tag-green">⏱️ ${time}min ETA</span>
+        <span class="tag tag-orange">⛽ ₹${(fuel*90).toFixed(0)}</span>
+        ${avoidAcc?'<span class="tag tag-green">✓ Accident-free</span>':''}
+        ${avoidWork?'<span class="tag tag-green">✓ No roadwork</span>':''}
+      </div>
+      ${steps.map(s=>`<div class="route-step"><span class="route-icon">▶</span>${s}</div>`).join('')}
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-green btn-sm" onclick="showToast('Navigation started! 🗺️','success')">▶ START NAV</button>
+        <button class="btn btn-cyan btn-sm" onclick="shareRoute()">📤 SHARE</button>
+      </div>
+    </div>`;
+  renderAltRoutes(from, to);
+  showToast('Route calculated! '+time+' min ETA','success');
+}
+function renderAltRoutes(from, to){
+  const el = document.getElementById('altRoutes');
+  if(!el) return;
+  const routes = [
+    {name:'Route A – Via Ring Road',time:rand(15,45),dist:randF(8,20),color:'var(--cyan)',tag:'Fastest'},
+    {name:'Route B – Via Highway 7',time:rand(20,55),dist:randF(12,28),color:'var(--green)',tag:'Eco'},
+    {name:'Route C – City Center',time:rand(25,60),dist:randF(6,15),color:'var(--orange)',tag:'Shortest'},
+  ];
+  el.innerHTML = routes.map((r,i)=>`
+    <div style="background:rgba(5,8,16,.6);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:8px;cursor:pointer;transition:all .2s" onclick="selectRoute(${i})" onmouseover="this.style.borderColor='${r.color}'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:.82rem;font-weight:600">${r.name}</div>
+          <div style="font-size:.7rem;color:var(--text2);margin-top:2px">${r.dist}km • ${r.time}min</div>
+        </div>
+        <span class="tag" style="background:rgba(0,0,0,.3);border-color:${r.color};color:${r.color}">${r.tag}</span>
+      </div>
+      <div class="progress-track" style="margin-top:8px"><div class="progress-fill" style="width:${(100-i*20)}%;background:${r.color}"></div></div>
+    </div>`).join('');
+}
+function selectRoute(i){showToast(['Fastest route selected','Eco route selected','Shortest route selected'][i],'success');}
+function shareRoute(){showToast('Route link copied to clipboard 📋','success');}
+function planEVRoute(){
+  const batt = document.getElementById('evBattery').value;
+  const range = document.getElementById('evRange').value;
+  const el = document.getElementById('evStations');
+  if(!el) return;
+  const stations = [
+    {name:'ChargeHub Central',dist:randF(1,5),ports:rand(2,8),speed:'DC Fast 150kW',wait:rand(0,20)},
+    {name:'EV Station North',dist:randF(5,12),ports:rand(1,6),speed:'AC Level 2 22kW',wait:rand(0,30)},
+    {name:'Tech Park Charger',dist:randF(10,20),ports:rand(4,12),speed:'DC Ultra 350kW',wait:0},
+    {name:'Mall EV Hub',dist:randF(2,8),ports:rand(3,10),speed:'DC Fast 150kW',wait:rand(0,15)},
+  ];
+  el.innerHTML = stations.map(s=>`<div class="ev-station">
+    <div class="ev-icon">⚡</div>
+    <div class="ev-info">
+      <div class="ev-name">${s.name}</div>
+      <div class="ev-dist">${s.dist}km away</div>
+      <div class="ev-ports">🔌 ${s.ports} ports available</div>
+      <div class="ev-speed">⚡ ${s.speed}</div>
+      ${s.wait>0?`<div class="ev-wait">⏳ ${s.wait}min wait</div>`:'<div style="font-size:.65rem;color:var(--green)">✓ Available Now</div>'}
+    </div>
+    <button class="btn btn-green btn-sm" onclick="showToast('Charging slot reserved! ⚡','success')">RESERVE</button>
+  </div>`).join('');
+  showToast(`Found charging stations within ${Math.round(range*batt/100)}km range`,'success');
+}
+
+// ==================== CARPOOL ====================
+function renderCarpool(){
+  const list = document.getElementById('carpoolList');
+  if(!list) return;
+  const names = ['Rahul S.','Priya M.','Amit K.','Sneha R.','Vikram T.','Ananya P.'];
+  S.carpoolMatches = names.map((name,i)=>({
+    id:i, name, from:choice(AREAS), to:choice(AREAS),
+    time:rand(7,10)+':'+choice(['00','15','30','45'])+' AM',
+    seats:rand(1,3), rating:randF(3.8,5),
+    initials:name.split(' ').map(n=>n[0]).join('')
+  }));
+  list.innerHTML = S.carpoolMatches.map(c=>`<div class="carpool-item" onclick="joinCarpool(${c.id})">
+    <div class="carpool-avatar">${c.initials}</div>
+    <div class="carpool-info">
+      <div class="carpool-name">${c.name}</div>
+      <div class="carpool-route">${c.from} → ${c.to}</div>
+      <div class="carpool-meta">🕐 ${c.time} • ⭐ ${c.rating}</div>
+    </div>
+    <div style="text-align:right">
+      <div class="carpool-seats">${c.seats} seats</div>
+      <div class="carpool-rating">⭐ ${c.rating}</div>
+    </div>
+  </div>`).join('');
+}
+function joinCarpool(id){
+  const c = S.carpoolMatches.find(x=>x.id===id);
+  showToast(`Request sent to ${c?.name}! 🚗`,'success');
+}
+
+// ==================== RIDE SHARE ====================
+function renderShareOptions(){
+  const el = document.getElementById('shareOptions');
+  if(!el) return;
+  const options = [
+    {name:'CityRide',icon:'🚗',desc:'Sedan, comfortable',price:rand(120,280),wait:rand(3,8),type:'Car'},
+    {name:'BikeShare',icon:'🏍️',desc:'Quick & affordable',price:rand(40,100),wait:rand(1,4),type:'Bike'},
+    {name:'AutoRide',icon:'🛺',desc:'Budget friendly',price:rand(60,150),wait:rand(2,6),type:'Auto'},
+    {name:'E-Scooter',icon:'🛴',desc:'Eco-friendly, short trips',price:rand(20,60),wait:rand(0,3),type:'Scooter'},
+    {name:'BikePath',icon:'🚲',desc:'Zero emissions',price:rand(10,30),wait:rand(1,5),type:'Bicycle'},
+    {name:'EV Cab',icon:'⚡',desc:'Electric, zero emissions',price:rand(150,320),wait:rand(5,12),type:'EV'},
+  ];
+  el.innerHTML = options.map(o=>`<div class="share-card" onclick="bookRide('${o.name}')">
+    <div class="share-card-icon">${o.icon}</div>
+    <div class="share-card-name">${o.name}</div>
+    <div class="share-card-desc">${o.desc}</div>
+    <div class="share-card-price">₹${o.price}</div>
+    <div class="share-card-wait">⏱️ ${o.wait} min</div>
+    <button class="btn btn-cyan btn-sm" style="margin-top:6px;width:100%">BOOK</button>
+  </div>`).join('');
+}
+function bookRide(name){showToast(`${name} booked! Driver arriving shortly 🚗`,'success');}
+
+// ==================== REPORT ====================
+function addReportPin(e){
+  const map = document.getElementById('reportMap');
+  const rect = map.getBoundingClientRect();
+  const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
+  const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(1);
+  const pins = document.getElementById('reportPins');
+  const pin = document.createElement('div');
+  pin.className = 'report-pin';
+  pin.style.cssText = `left:${x}%;top:${y}%`;
+  const type = document.getElementById('reportType')?.value.split(' ')[0]||'pothole';
+  const circle = document.createElement('div');
+  circle.className = 'pin-circle pin-type-pothole';
+  circle.style.background = 'var(--orange)';
+  pin.appendChild(circle);
+  pins.appendChild(pin);
+  showToast('Location pinned on map 📍','success');
+}
+function submitReport(){
+  const type = document.getElementById('reportType')?.value||'Pothole';
+  const sev = document.getElementById('reportSeverity')?.value||'Low';
+  S.reports.push({type,sev,time:'Just now',id:Date.now()});
+  renderReportHistory();
+  showToast('Report submitted! Authorities notified 📢','success');
+}
+function renderReportHistory(){
+  const el = document.getElementById('reportHistory');
+  if(!el) return;
+  el.innerHTML = `<div style="font-size:.7rem;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">YOUR REPORTS</div>`+
+    S.reports.slice(-5).reverse().map(r=>`<div style="background:rgba(5,8,16,.6);border:1px solid var(--border);border-radius:4px;padding:6px 10px;margin-bottom:4px;font-size:.72rem;display:flex;justify-content:space-between"><span>${r.type}</span><span style="color:var(--text2)">${r.time}</span></div>`).join('');
+}
+
+// ==================== EMERGENCY ====================
+function triggerSOS(){
+  showModal('🆘 SOS ALERT SENT','<div style="text-align:center;padding:20px 0"><div style="font-size:3rem;margin-bottom:12px">🚨</div><p style="color:var(--red);font-size:1.1rem;font-weight:700;margin-bottom:8px">Emergency Services Notified!</p><p>Location: GPS coordinates sent</p><p>ETA of nearest unit: '+rand(3,8)+' minutes</p><p style="color:var(--text2);font-size:.75rem;margin-top:8px">Emergency contacts notified via SMS</p></div><button class="btn btn-red" onclick="closeModal()" style="width:100%">CANCEL SOS</button>');
+}
+function renderEmergency(){
+  const el = document.getElementById('accidentDetection');
+  if(!el) return;
+  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">
+    ${[{loc:'Highway 7, Km 34',sev:'Severe',time:'2m ago',units:'🚑🚒'},{loc:'Oak Blvd Intersection',sev:'Minor',time:'8m ago',units:'🚓'},{loc:'Harbor Rd Bridge',sev:'Moderate',time:'15m ago',units:'🚑🚓'}].map(a=>`
+    <div style="background:rgba(255,51,102,.05);border:1px solid rgba(255,51,102,.2);border-radius:6px;padding:10px">
+      <div style="font-size:.8rem;font-weight:600">📍 ${a.loc}</div>
+      <div style="display:flex;gap:6px;margin-top:4px">
+        <span class="tag tag-red">${a.sev}</span>
+        <span style="font-size:.65rem;color:var(--text2)">${a.time}</span>
+        <span style="font-size:.65rem">${a.units}</span>
+      </div>
+    </div>`).join('')}
+  </div>`;
+  const evEl = document.getElementById('emergencyVehicles');
+  if(evEl) evEl.innerHTML = `<table><thead><tr><th>Unit</th><th>Type</th><th>Status</th><th>ETA</th></tr></thead><tbody>
+    ${[['AMB-01','🚑 Ambulance','En Route',rand(2,8)+'min'],['FIRE-03','🚒 Fire Truck','At Scene','—'],['POLICE-07','🚓 Police','Dispatched',rand(3,12)+'min']].map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}
+  </tbody></table>`;
+}
+
+// ==================== ANALYTICS ====================
+function renderAnalytics(){
+  const el = document.getElementById('analyticsMetrics');
+  if(el&&!el.innerHTML){
+    const metrics = [
+      {title:'Total Trips Today',big:rand(45000,85000).toLocaleString(),sub:'vehicles processed',color:'var(--cyan)'},
+      {title:'Avg Commute Time',big:rand(22,38)+'min',sub:'↓ 4min from yesterday',color:'var(--green)'},
+      {title:'Transport Modal Split',big:'42%',sub:'public transit share',color:'var(--purple)'},
+      {title:'Carbon Emissions',big:randF(120,200)+'t',sub:'CO₂ today citywide',color:'var(--orange)'},
+      {title:'Fuel Saved',big:'₹'+rand(80000,200000).toLocaleString(),sub:'city-wide today',color:'var(--yellow)'},
+      {title:'Infrastructure Score',big:rand(72,94)+'%',sub:'road quality index',color:'var(--green)'},
+    ];
+    el.innerHTML = metrics.map(m=>`<div class="metric-card"><div class="metric-title">${m.title}</div><div class="metric-big" style="color:${m.color}">${m.big}</div><div class="metric-sub">${m.sub}</div></div>`).join('');
+  }
+  if(document.getElementById('mobilityChart')) {
+    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    drawLineChart('mobilityChart',days,[
+      {data:days.map(()=>rand(40000,90000)),color:'#00c8ff',fill:'rgba(0,200,255,0.06)'},
+      {data:days.map(()=>rand(10000,40000)),color:'#00ff9d',fill:'rgba(0,255,157,0.04)'},
+    ],{xLabels:true});
+  }
+  renderInfraInsights();
+  renderDrivingScores();
+}
+function renderInfraInsights(){
+  const el = document.getElementById('infraInsights');
+  if(!el||el.innerHTML) return;
+  const insights = [
+    {icon:'🔧',text:'Ring Road requires resurfacing within 6 months (Quality Score: 42%)'},
+    {icon:'🌉',text:'Harbor Bridge traffic capacity may be exceeded by 2026 – expansion recommended'},
+    {icon:'🅿️',text:'North District severely under-parked – 3 new lots needed for demand'},
+    {icon:'🚦',text:'Tech Park intersection ranked #1 for AI signal upgrade ROI'},
+    {icon:'🚌',text:'Route 205 ridership up 34% – additional buses recommended peak hours'},
+    {icon:'⚡',text:'EV charging gap detected: Airport Zone has 0 fast chargers within 5km'},
+  ];
+  el.innerHTML = insights.map(i=>`<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><span style="font-size:1.1rem">${i.icon}</span><span style="font-size:.8rem;color:var(--text)">${i.text}</span></div>`).join('');
+}
+function renderDrivingScores(){
+  const el = document.getElementById('drivingScores');
+  if(!el||el.innerHTML) return;
+  const cats = [
+    {name:'Speed Compliance',score:rand(70,98),color:'var(--cyan)'},
+    {name:'Smooth Braking',score:rand(60,95),color:'var(--green)'},
+    {name:'Safe Distance',score:rand(65,90),color:'var(--orange)'},
+    {name:'Night Driving',score:rand(55,88),color:'var(--purple)'},
+    {name:'Fuel Efficiency',score:rand(70,95),color:'var(--yellow)'},
+  ];
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+    ${cats.map(c=>`<div><div class="progress-label"><span>${c.name}</span><span style="font-family:Orbitron,sans-serif;font-size:.8rem;color:${c.color}">${c.score}</span></div><div class="progress-track"><div class="progress-fill" style="width:${c.score}%;background:${c.color}"></div></div></div>`).join('')}
+  </div>`;
+}
+
+// ==================== ADVANCED ====================
+function renderAdvanced(){
+  renderDigitalTwin();
+  renderAVGrid();
+  renderDrones();
+  renderTolls();
+  renderPricing();
+  renderLogistics();
+}
+function renderDigitalTwin(){
+  const canvas = document.getElementById('twinCanvas');
+  if(!canvas||canvas.querySelector('.twin-building')) return;
+  const buildings = [[5,5,80,120],[95,5,120,80],[5,130,60,90],[170,5,80,100],[250,5,100,70],[20,170,120,80],[160,120,90,100],[260,100,110,130]];
+  buildings.forEach(([x,y,w,h])=>{
+    const b = document.createElement('div');
+    b.className = 'twin-building';
+    b.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${h}px`;
+    canvas.appendChild(b);
+  });
+  [[0,130,'80%','8px'],[140,0,'8px','100%'],[250,0,'8px','100%']].forEach(([x,y,w,h])=>{
+    const r = document.createElement('div');
+    r.className = w==='8px'?'twin-road-v':'twin-road-h';
+    r.style.cssText = `left:${x}px;top:${y}px;width:${w};height:${h}`;
+    canvas.appendChild(r);
+  });
+  // area labels
+  [['Downtown',30,40],['Midtown',160,30],['Tech Park',260,30]].forEach(([label,x,y])=>{
+    const l = document.createElement('div');
+    l.className = 'twin-label';
+    l.textContent = label;
+    l.style.cssText = `left:${x}px;top:${y}px`;
+    canvas.appendChild(l);
+  });
+  S.twinVehicles = Array.from({length:20},(_,i)=>({
+    id:i, x:rand(10,380), y:rand(10,260),
+    dx:choice([-1,0,1])*.8, dy:choice([-1,0,1])*.8, el:null
+  }));
+  S.twinVehicles.forEach(v=>{
+    const el = document.createElement('div');
+    el.className = 'twin-vehicle';
+    el.style.cssText = `left:${v.x}px;top:${v.y}px`;
+    canvas.appendChild(el);
+    v.el = el;
+  });
+}
+function animateTwin(){
+  if(!document.getElementById('sec-advanced').classList.contains('active')) return;
+  const speedMult = {normal:1,rush:2.5,event:1.8,emergency:3}[S.twinMode]||1;
+  S.twinVehicles.forEach(v=>{
+    v.x += v.dx*speedMult; v.y += v.dy*speedMult;
+    if(v.x<5||v.x>380){v.dx*=-1;} if(v.y<5||v.y>270){v.dy*=-1;}
+    if(v.el){v.el.style.left=v.x+'px';v.el.style.top=v.y+'px';}
+  });
+  const avgSpeed = Math.round(30*speedMult);
+  document.getElementById('twinVehicleCount').textContent = S.twinVehicles.length;
+  document.getElementById('twinAvgSpeed').textContent = avgSpeed+' km/h';
+  document.getElementById('twinCongestion').textContent = Math.min(95,Math.round(speedMult*25))+'%';
+}
+function twinSimulate(mode){
+  S.twinMode = mode;
+  document.getElementById('twinMode').textContent = mode.toUpperCase();
+  const colors = {normal:'var(--green)',rush:'var(--red)',event:'var(--orange)',emergency:'var(--red)'};
+  document.getElementById('twinMode').style.color = colors[mode];
+  showToast('Digital Twin: '+mode+' simulation activated','info');
+}
+function renderAVGrid(){
+  const el = document.getElementById('avGrid');
+  if(!el||el.innerHTML) return;
+  const vehicles = ['AV-2847','AV-1923','AV-3512','AV-0087','AV-4231','AV-1756'];
+  const statuses = ['Autonomous','Manual Override','Charging','En Route','Idle','Maintenance'];
+  el.innerHTML = vehicles.map((id,i)=>{
+    const status = statuses[i];
+    const battery = rand(20,100);
+    const speed = rand(0,80);
+    const col = status==='Autonomous'?'var(--green)':status==='Manual Override'?'var(--orange)':status==='Charging'?'var(--cyan)':'var(--text2)';
+    return `<div class="av-vehicle ${status==='Autonomous'?'active':''}" onclick="showAVDetail('${id}')">
+      <div class="av-id">${id}</div>
+      <div class="av-status" style="color:${col}">● ${status}</div>
+      <div class="av-bar progress-track" style="margin-top:8px"><div class="progress-fill" style="width:${battery}%;background:${battery<20?'var(--red)':battery<50?'var(--orange)':'var(--cyan)'}"></div></div>
+      <div class="av-metrics">
+        <div class="av-metric"><div class="v" style="color:var(--cyan)">${speed}</div><div class="l">km/h</div></div>
+        <div class="av-metric"><div class="v" style="color:var(--green)">${battery}%</div><div class="l">Battery</div></div>
+        <div class="av-metric"><div class="v" style="color:var(--yellow)">${randF(0,5)}</div><div class="l">V2I Score</div></div>
+        <div class="av-metric"><div class="v" style="color:var(--purple)">${rand(0,150)}km</div><div class="l">Today</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function showAVDetail(id){showModal('🤖 AUTONOMOUS VEHICLE '+id,`<p>Status: Active & Autonomous</p><p>Sensors: All operational</p><p>V2I communication: Connected</p><p>Safety score: ${rand(90,99)}/100</p><p>Distance today: ${rand(50,250)}km</p>`);}
+function renderDrones(){
+  const el = document.getElementById('droneGrid');
+  if(!el||el.innerHTML) return;
+  const drones = ['UAV-01','UAV-02','UAV-03','UAV-04','UAV-05','UAV-06','UAV-07','UAV-08'];
+  const tasks = ['Traffic Monitor','Incident Survey','Area Patrol','Emergency Scout','Data Collection','Idle/Docked'];
+  el.innerHTML = drones.map((id,i)=>{
+    const task = tasks[i%tasks.length];
+    const battery = rand(15,100);
+    const active = task!=='Idle/Docked';
+    return `<div class="drone-card" onclick="showToast('${id}: ${task}','info')">
+      <div class="drone-icon">🚁</div>
+      <div class="drone-id">${id}</div>
+      <div class="drone-status" style="color:${active?'var(--green)':'var(--text2)'}">● ${task}</div>
+      <div class="drone-battery progress-track" style="margin-top:8px"><div class="progress-fill" style="width:${battery}%;background:${battery<20?'var(--red)':battery<50?'var(--orange)':'var(--purple)'}"></div></div>
+      <div style="font-size:.6rem;color:var(--text2);margin-top:2px">${battery}% battery</div>
+    </div>`;
+  }).join('');
+}
+function renderTolls(){
+  const el = document.getElementById('tollList');
+  if(!el||el.innerHTML) return;
+  const tolls = [
+    {id:'TG-01',name:'City Center Gateway',traffic:'High',price:rand(30,80)},
+    {id:'TG-02',name:'Highway 7 Entry',traffic:'Moderate',price:rand(20,60)},
+    {id:'TG-03',name:'Harbor Bridge Toll',traffic:'Low',price:rand(15,40)},
+    {id:'TG-04',name:'Airport Expressway',traffic:'High',price:rand(40,100)},
+    {id:'TG-05',name:'Ring Road East',traffic:'Very High',price:rand(50,120)},
+  ];
+  el.innerHTML = tolls.map(t=>`<div class="toll-item">
+    <div class="toll-id">${t.id}</div>
+    <div class="toll-info"><div class="toll-name">${t.name}</div><div class="toll-traffic">Traffic: ${t.traffic}</div></div>
+    <div style="text-align:right"><div class="toll-price">₹${t.price}</div><div class="toll-dynamic">Dynamic Pricing</div></div>
+    <button class="btn btn-yellow btn-sm" style="border-color:var(--yellow);color:var(--yellow)" onclick="showToast('FASTag payment: ₹${t.price} processed','success')">PAY</button>
+  </div>`).join('');
+}
+function renderPricing(){
+  const el = document.getElementById('pricingGrid');
+  if(!el||el.innerHTML) return;
+  const zones = [
+    {name:'Downtown Core',price:'₹'+rand(40,100),level:'Peak',col:'var(--red)'},
+    {name:'Midtown',price:'₹'+rand(25,70),level:'High',col:'var(--orange)'},
+    {name:'Tech Park',price:'₹'+rand(20,60),level:'Moderate',col:'var(--yellow)'},
+    {name:'Suburbs',price:'₹'+rand(10,30),level:'Low',col:'var(--green)'},
+    {name:'Airport Zone',price:'₹'+rand(30,80),level:'High',col:'var(--orange)'},
+    {name:'Old Town',price:'₹'+rand(15,45),level:'Moderate',col:'var(--yellow)'},
+  ];
+  el.innerHTML = zones.map(z=>`<div class="price-zone">
+    <div class="price-zone-name">${z.name}</div>
+    <div class="price-zone-price" style="color:${z.col}">${z.price}</div>
+    <div class="price-zone-level" style="color:${z.col}">${z.level} Demand</div>
+  </div>`).join('');
+}
+function renderLogistics(){
+  const el = document.getElementById('logisticsHubs');
+  if(!el||el.innerHTML) return;
+  const hubs = [
+    {name:'North Distribution Hub',capacity:rand(60,95),robots:rand(5,20),drones:rand(2,8),status:'Active'},
+    {name:'Port Logistics Center',capacity:rand(40,90),robots:rand(8,25),drones:rand(3,12),status:'Active'},
+    {name:'Tech Park Micro-Hub',capacity:rand(30,70),robots:rand(3,10),drones:rand(1,5),status:'Active'},
+    {name:'Airport Cargo Hub',capacity:rand(70,99),robots:rand(10,30),drones:rand(5,15),status:'High Load'},
+  ];
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+    ${hubs.map(h=>`<div style="background:rgba(5,8,16,.8);border:1px solid rgba(0,255,157,.2);border-radius:8px;padding:14px">
+      <div style="font-size:.82rem;font-weight:700;color:var(--green);margin-bottom:6px">${h.name}</div>
+      <div class="progress-row"><div class="progress-label"><span>Capacity</span><span>${h.capacity}%</span></div><div class="progress-track"><div class="progress-fill" style="width:${h.capacity}%;background:${h.capacity>80?'var(--red)':'var(--green)'}"></div></div></div>
+      <div style="display:flex;gap:8px;margin-top:6px;font-size:.7rem"><span class="tag tag-cyan">🤖 ${h.robots} robots</span><span class="tag tag-purple">🚁 ${h.drones} drones</span></div>
+      <div style="font-size:.65rem;color:${h.status==='High Load'?'var(--red)':'var(--green)'};margin-top:6px">● ${h.status}</div>
+    </div>`).join('')}
+  </div>`;
+}
+
+// ==================== PREDICTION CHART ====================
+function renderPredictionChart(){
+  if(document.getElementById('predictionChart')){
+    const hours = Array.from({length:72},(_,i)=>{const h=i%24;return h===0?'Day '+(Math.floor(i/24)+1):h+':00';});
+    const predicted = hours.map((_,i)=>{const hour=i%24;return hour>=7&&hour<=9||hour>=17&&hour<=20?rand(75,95):hour>=22||hour<=5?rand(10,25):rand(30,65);});
+    const actual = predicted.slice(0,24).map(v=>v+rand(-8,8));
+    drawLineChart('predictionChart',hours,[
+      {data:actual.concat(Array(48).fill(null)).filter(v=>v!==null),color:'#00ff9d',fill:'rgba(0,255,157,0.05)'},
+      {data:predicted,color:'rgba(0,200,255,0.6)',fill:'rgba(0,200,255,0.03)'},
+    ],{xLabels:true});
+  }
+  const el = document.getElementById('predictionInsights');
+  if(el&&!el.innerHTML){
+    const insights = [
+      {icon:'📈',text:'Rush hour peak expected 8:00-9:30 AM tomorrow',col:'var(--orange)'},
+      {icon:'🎉',text:'Weekend event: +35% traffic Saturday 6-10 PM',col:'var(--yellow)'},
+      {icon:'🌧️',text:'Rain forecast Thursday: +20% delay estimate',col:'var(--cyan)'},
+      {icon:'🟢',text:'Best travel window: 10:30 AM – 12:00 PM',col:'var(--green)'},
+    ];
+    el.innerHTML = insights.map(i=>`<div style="background:rgba(5,8,16,.6);border:1px solid var(--border);border-radius:6px;padding:10px 12px;display:flex;gap:8px;align-items:center"><span style="font-size:1.1rem">${i.icon}</span><span style="font-size:.78rem;color:${i.col}">${i.text}</span></div>`).join('');
+  }
+}
+
+// ==================== DEMAND CHART ====================
+function renderDemandChart(){
+  if(document.getElementById('demandChart')){
+    const hours = Array.from({length:24},(_,i)=>i+':00');
+    drawLineChart('demandChart',hours,[
+      {data:hours.map((_,i)=>i>=6&&i<=10||i>=17&&i<=21?rand(800,2000):rand(100,600),color:'#a855f7',fill:'rgba(168,85,247,0.06)'},
+      {data:hours.map(()=>rand(200,800)),color:'#00c8ff',fill:'rgba(0,200,255,0.04)'},
+    ],{xLabels:true});
+  }
+  const el = document.getElementById('lastMile');
+  if(el&&!el.innerHTML){
+    const options = [
+      {icon:'🛴',name:'E-Scooter',stations:rand(8,20),avail:rand(10,50)},
+      {icon:'🚲',name:'Bike Share',stations:rand(12,25),avail:rand(20,80)},
+      {icon:'🚌',name:'Feeder Bus',stations:rand(5,15),avail:'On demand'},
+      {icon:'🚕',name:'Auto Taxi',stations:'All areas',avail:rand(5,20)+' nearby'},
+    ];
+    el.innerHTML = options.map(o=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><span style="font-size:1.3rem">${o.icon}</span><div><div style="font-size:.82rem;font-weight:600">${o.name}</div><div style="font-size:.65rem;color:var(--text2)">${o.stations} stations • ${o.avail} available</div></div><button class="btn btn-cyan btn-sm" onclick="showToast('${o.name} selected','success')" style="margin-left:auto">SELECT</button></div>`).join('');
+  }
+}
+
+// ==================== CAMERAS ====================
+function renderCameras(){
+  const el = document.getElementById('camerasGrid');
+  if(!el||el.innerHTML) return;
+  const cams = [
+    {id:'CAM-01',loc:'Main St & 1st Ave',status:'Live',traffic:'Heavy'},
+    {id:'CAM-05',loc:'Highway 7 North',status:'Live',traffic:'Moderate'},
+    {id:'CAM-09',loc:'Park Ave Junction',status:'Live',traffic:'Clear'},
+    {id:'CAM-13',loc:'Harbor Bridge',status:'Live',traffic:'Heavy'},
+    {id:'CAM-17',loc:'Airport Entry',status:'Offline',traffic:'N/A'},
+    {id:'CAM-21',loc:'Stadium Gate',status:'Live',traffic:'Moderate'},
+  ];
+  el.innerHTML = cams.map(c=>`<div style="background:var(--panel);border:1px solid var(--border);border-radius:8px;overflow:hidden;cursor:pointer;transition:all .2s" onclick="showCamDetail('${c.id}')" onmouseover="this.style.borderColor='var(--cyan)'" onmouseout="this.style.borderColor='var(--border)'">
+    <div style="height:160px;background:#04080f;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden">
+      <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,200,255,.05),transparent)"></div>
+      <span style="font-size:3rem">📷</span>
+      <div style="position:absolute;top:8px;right:8px;font-size:.6rem;padding:2px 6px;border-radius:3px;font-weight:700;background:${c.status==='Live'?'rgba(0,255,157,.15)':'rgba(255,51,102,.15)'};color:${c.status==='Live'?'var(--green)':'var(--red)'};border:1px solid ${c.status==='Live'?'rgba(0,255,157,.3)':'rgba(255,51,102,.3)'}">${c.status==='Live'?'● LIVE':'✕ OFFLINE'}</div>
+      <div style="position:absolute;top:8px;left:8px;font-family:JetBrains Mono,monospace;font-size:.6rem;color:rgba(0,200,255,.6)">${c.id}</div>
+      <div style="position:absolute;bottom:8px;left:8px;font-size:.62rem;background:rgba(0,0,0,.7);padding:3px 6px;border-radius:3px;color:${c.traffic==='Heavy'?'var(--red)':c.traffic==='Moderate'?'var(--orange)':'var(--green)'}">${c.traffic}</div>
+    </div>
+    <div style="padding:10px"><div style="font-size:.78rem;font-weight:600">${c.loc}</div><div style="font-size:.65rem;color:var(--text2);margin-top:2px">Integration: AI Vehicle Detection Active</div></div>
+  </div>`).join('');
+}
+function showCamDetail(id){showModal('📷 CAMERA '+id,'<p>Status: Live Feed</p><p>AI Detection: Active</p><p>Vehicles/min: '+rand(5,80)+'</p><p>Speed avg: '+rand(20,70)+'km/h</p><p>Incidents today: '+rand(0,5)+'</p>');}
+
+// ==================== SETTINGS ====================
+function renderSettings(){
+  const prefs = document.getElementById('userPrefs');
+  if(prefs) prefs.innerHTML = `
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">Home Location</label><input class="input" value="Sector 15, City Center"></div>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">Work Location</label><input class="input" value="Tech Park, North"></div>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">Preferred Transport</label><select class="input"><option>🚗 Personal Car</option><option>🚌 Bus</option><option>🚇 Metro</option><option>🚲 Bicycle</option></select></div>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">Vehicle Type</label><select class="input"><option>Petrol</option><option>Diesel</option><option>Electric</option><option>Hybrid</option></select></div>
+    <button class="btn btn-cyan" onclick="showToast('Preferences saved ✓','success')" style="width:100%">SAVE PREFERENCES</button>`;
+  const notif = document.getElementById('notifSettings');
+  if(notif) notif.innerHTML = ['Traffic Alerts','Accident Alerts','Parking Reminders','Bus Arrivals','Weather Alerts','Community Reports','EV Charging','Toll Updates'].map(label=>{
+    const on = Math.random()>.3;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)"><span style="font-size:.8rem">${label}</span><div style="width:36px;height:18px;background:${on?'var(--cyan)':'rgba(255,255,255,.1)'};border-radius:9px;cursor:pointer;position:relative;transition:all .3s" onclick="toggleNotif(this)"><div style="width:14px;height:14px;background:white;border-radius:50%;position:absolute;top:2px;left:${on?'20px':'2px'};transition:all .3s"></div></div></div>`;
+  }).join('');
+  const reminders = document.getElementById('commuteReminders');
+  if(reminders) reminders.innerHTML = `
+    <div class="form-row"><div class="form-group"><label class="form-label">Morning Reminder</label><input class="input" type="time" value="07:45"></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Evening Reminder</label><input class="input" type="time" value="17:30"></div></div>
+    <label style="font-size:.72rem;color:var(--text2);display:flex;align-items:center;gap:6px;cursor:pointer;margin:8px 0"><input type="checkbox" checked> Weather-aware routing alerts</label>
+    <label style="font-size:.72rem;color:var(--text2);display:flex;align-items:center;gap:6px;cursor:pointer;margin:8px 0"><input type="checkbox" checked> Daily traffic summary</label>
+    <button class="btn btn-green" onclick="showToast('Reminders set ✓','success')" style="width:100%;margin-top:8px">SET REMINDERS</button>`;
+  const lang = document.getElementById('langOffline');
+  if(lang) lang.innerHTML = `
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">Language</label><select class="input"><option>English</option><option>Hindi</option><option>Tamil</option><option>Telugu</option><option>Bengali</option><option>Marathi</option></select></div>
+    <label style="font-size:.72rem;color:var(--text2);display:flex;align-items:center;gap:6px;cursor:pointer;margin:8px 0"><input type="checkbox"> Enable Offline Maps</label>
+    <label style="font-size:.72rem;color:var(--text2);display:flex;align-items:center;gap:6px;cursor:pointer;margin:8px 0"><input type="checkbox" checked> Voice Navigation</label>
+    <label style="font-size:.72rem;color:var(--text2);display:flex;align-items:center;gap:6px;cursor:pointer;margin:8px 0"><input type="checkbox"> Auto-translate Signs</label>
+    <button class="btn btn-cyan" onclick="showToast('Language settings saved','success')" style="width:100%;margin-top:8px">SAVE</button>`;
+  const vp = document.getElementById('vehicleProfile');
+  if(vp) vp.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div><div class="form-group" style="margin-bottom:10px"><label class="form-label">Vehicle Number</label><input class="input" value="KA01AB1234"></div><div class="form-group" style="margin-bottom:10px"><label class="form-label">Model</label><input class="input" value="Honda City"></div></div>
+    <div style="background:rgba(0,200,255,.05);border:1px solid rgba(0,200,255,.15);border-radius:8px;padding:14px">
+      <div style="font-size:.7rem;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">DRIVING SCORE</div>
+      <div style="font-family:Orbitron,sans-serif;font-size:3rem;font-weight:700;color:var(--cyan);text-align:center">87</div>
+      <div style="text-align:center;font-size:.65rem;color:var(--text2)">/ 100 — Good Driver</div>
+      <div class="progress-track" style="margin-top:10px"><div class="progress-fill" style="width:87%;background:var(--cyan)"></div></div>
+    </div>
+  </div>`;
+}
+function toggleNotif(el){
+  const isOn = el.style.background.includes('var(--cyan)')||el.style.background.includes('#00c8ff');
+  el.style.background = isOn?'rgba(255,255,255,.1)':'var(--cyan)';
+  el.querySelector('div').style.left = isOn?'2px':'20px';
+}
+
+// ==================== TICKET BOOKING ====================
+function renderTicketBooking(){
+  const el = document.getElementById('ticketBooking');
+  if(!el) return;
+  el.innerHTML = `
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">Journey Type</label><select class="input" id="ticketType"><option>Single Journey</option><option>Day Pass</option><option>Weekly Pass</option><option>Monthly Pass</option></select></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">From</label><input class="input" id="ticketFrom" placeholder="Station"></div>
+      <div class="form-group"><label class="form-label">To</label><input class="input" id="ticketTo" placeholder="Station"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Passengers</label><input class="input" type="number" id="ticketPax" value="1" min="1" max="10"></div>
+      <div class="form-group"><label class="form-label">Date</label><input class="input" type="date" id="ticketDate"></div>
+    </div>
+    <button class="btn btn-green" onclick="generateTicket()" style="width:100%">🎫 GENERATE QR TICKET</button>
+    <div id="ticketOutput" style="margin-top:12px"></div>`;
+}
+function generateTicket(){
+  const type = document.getElementById('ticketType')?.value||'Single';
+  const from = document.getElementById('ticketFrom')?.value||'Central';
+  const to = document.getElementById('ticketTo')?.value||'Airport';
+  const pax = document.getElementById('ticketPax')?.value||1;
+  const fare = rand(20,200)*pax;
+  const bookingId = 'BK'+Date.now().toString().slice(-8);
+  document.getElementById('ticketOutput').innerHTML = `
+    <div style="background:rgba(0,255,157,.05);border:1px solid rgba(0,255,157,.2);border-radius:8px;padding:14px;text-align:center">
+      <div style="font-family:Orbitron,sans-serif;font-size:.75rem;color:var(--green);letter-spacing:2px;margin-bottom:8px">TICKET CONFIRMED</div>
+      <div style="font-size:3rem;margin:8px 0">🎫</div>
+      <div style="font-family:JetBrains Mono,monospace;font-size:.7rem;color:var(--cyan);margin-bottom:6px">${bookingId}</div>
+      <div style="font-size:.8rem">${from} → ${to}</div>
+      <div style="font-size:.75rem;color:var(--text2);margin:4px 0">${type} • ${pax} passenger(s)</div>
+      <div style="font-family:Orbitron,sans-serif;font-size:1.2rem;color:var(--yellow);margin-top:8px">₹${fare}</div>
+      <button class="btn btn-green btn-sm" onclick="showToast('QR downloaded!','success')" style="margin-top:8px">📲 SHOW QR</button>
+    </div>`;
+}
+function renderFareCalc(){
+  const el = document.getElementById('fareCalc');
+  if(!el) return;
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      ${[['Bus – Any Stop','₹10-25'],['Metro – Zone 1','₹15-40'],['Metro – Zone 2','₹25-60'],['Train – Local','₹30-80'],['Day Pass','₹150'],['Weekly Pass','₹800']].map(([n,p])=>`<div style="background:rgba(5,8,16,.6);border:1px solid var(--border);border-radius:6px;padding:8px;display:flex;justify-content:space-between;font-size:.75rem"><span>${n}</span><span style="color:var(--yellow);font-family:Orbitron,monospace;font-size:.72rem">${p}</span></div>`).join('')}
+    </div>
+    <div style="background:rgba(168,85,247,.05);border:1px solid rgba(168,85,247,.2);border-radius:6px;padding:10px;text-align:center">
+      <div style="font-size:.7rem;color:var(--text2);margin-bottom:4px">QR PASS — SCAN TO RIDE</div>
+      <div style="font-size:3rem">📱</div>
+      <button class="btn btn-sm" style="border-color:var(--purple);color:var(--purple);margin-top:6px" onclick="showToast('QR Pass generated! 📱','success')">GENERATE QR PASS</button>
+    </div>`;
+}
+function renderBusOccupancy(){
+  const el = document.getElementById('busOccupancy');
+  if(!el) return;
+  el.innerHTML = S.buses.map(b=>{
+    const pct = b.occupancy;
+    const col = pct>80?'var(--red)':pct>50?'var(--orange)':'var(--green)';
+    return `<div class="progress-row"><div class="progress-label"><span>Bus ${b.num} • ${b.from}→${b.to}</span><span style="color:${col};font-family:Orbitron,sans-serif;font-size:.72rem">${pct}%</span></div><div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:${col}"></div></div></div>`;
+  }).join('');
+}
+function renderMetroLines(){
+  const el = document.getElementById('metroLines');
+  if(!el||el.innerHTML) return;
+  const lines = [
+    {name:'Line 1 – Blue',from:'Airport',to:'City Center',trains:rand(4,8),delay:rand(0,5)},
+    {name:'Line 2 – Red',from:'North Gate',to:'Harbor',trains:rand(3,7),delay:rand(0,3)},
+    {name:'Line 3 – Green',from:'Stadium',to:'Tech Park',trains:rand(2,6),delay:rand(0,8)},
+  ];
+  el.innerHTML = lines.map(l=>`<div style="background:rgba(5,8,16,.6);border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:8px">
+    <div style="font-size:.82rem;font-weight:700">${l.name}</div>
+    <div style="font-size:.7rem;color:var(--text2);margin:4px 0">${l.from} ↔ ${l.to}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+      <span class="tag tag-cyan">🚇 ${l.trains} active</span>
+      <span class="tag ${l.delay>3?'tag-orange':'tag-green'}">${l.delay>0?'+'+l.delay+'min delay':'On time'}</span>
+    </div>
+  </div>`).join('');
+}
+function renderCrowdPrediction(){
+  const el = document.getElementById('crowdPrediction');
+  if(!el||el.innerHTML) return;
+  const stations = ['Central','Airport','Stadium','Harbor','Tech Park','Old Town'];
+  el.innerHTML = stations.map(s=>{
+    const crowd=rand(10,100);
+    const col=crowd>70?'var(--red)':crowd>40?'var(--orange)':'var(--green)';
+    return `<div class="progress-row"><div class="progress-label"><span>${s}</span><span style="color:${col}">${crowd}%</span></div><div class="progress-track"><div class="progress-fill" style="width:${crowd}%;background:${col}"></div></div></div>`;
+  }).join('');
+}
+function renderTrainTracking(){
+  const el = document.getElementById('trainTracking');
+  if(!el||el.innerHTML) return;
+  const trains = [
+    {id:'EXP-1201',from:'City A',to:'City B',status:'On Time',platform:rand(1,8),eta:rand(5,45)+'min'},
+    {id:'LOC-0847',from:'Harbor',to:'North Station',status:'+8 min delay',platform:rand(1,5),eta:rand(10,60)+'min'},
+    {id:'RAJ-0032',from:'Airport',to:'Capital',status:'On Time',platform:rand(1,12),eta:rand(2,30)+'min'},
+    {id:'INT-4501',from:'City C',to:'Tech Hub',status:'+15 min delay',platform:rand(1,6),eta:rand(20,90)+'min'},
+  ];
+  el.innerHTML = `<table><thead><tr><th>Train ID</th><th>Route</th><th>Status</th><th>Platform</th><th>ETA</th><th></th></tr></thead><tbody>
+    ${trains.map(t=>`<tr>
+      <td><span style="font-family:Orbitron,monospace;font-size:.75rem;color:var(--cyan)">${t.id}</span></td>
+      <td>${t.from} → ${t.to}</td>
+      <td><span class="tag ${t.status==='On Time'?'tag-green':'tag-orange'}">${t.status}</span></td>
+      <td>P-${t.platform}</td>
+      <td style="font-family:Orbitron,monospace;font-size:.8rem">${t.eta}</td>
+      <td><button class="btn btn-cyan btn-sm" onclick="showToast('Tracking ${t.id}','info')">TRACK</button></td>
+    </tr>`).join('')}
+  </tbody></table>`;
+}
+function renderBusSchedule(){
+  const el = document.getElementById('busSchedule');
+  if(!el) return;
+  const nexts = S.buses.map(b=>({num:b.num,eta:b.eta,route:b.from+'→'+b.to}));
+  nexts.sort((a,b)=>a.eta-b.eta);
+  el.innerHTML = `<div style="font-size:.7rem;color:var(--text2);margin-bottom:8px;letter-spacing:1px">NEXT ARRIVALS — ALL ROUTES</div>`+
+    nexts.map(b=>`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)"><span style="font-family:Orbitron,monospace;font-size:.85rem;font-weight:700;color:var(--green);min-width:36px">${b.num}</span><span style="font-size:.75rem;flex:1">${b.route}</span><span style="font-family:Orbitron,monospace;font-size:.85rem;color:var(--cyan)">${b.eta}min</span></div>`).join('');
+}
+function renderSpeedMonitor(){
+  const el = document.getElementById('speedMonitor');
+  if(!el) return;
+  el.innerHTML = ROAD_NAMES.map(r=>{const speed=rand(10,90);const col=speed<30?'var(--red)':speed<60?'var(--orange)':'var(--green)';return `<div class="progress-row"><div class="progress-label"><span>${r}</span><span style="color:${col};font-family:Orbitron,monospace">${speed}km/h</span></div><div class="progress-track"><div class="progress-fill" style="width:${speed/90*100}%;background:${col}"></div></div></div>`;}).join('');
+}
+function renderDensityMonitor(){
+  const el = document.getElementById('densityMonitor');
+  if(!el) return;
+  el.innerHTML = AREAS.slice(0,6).map(a=>{const d=rand(50,500);const col=d>400?'var(--red)':d>250?'var(--orange)':'var(--green)';return `<div class="progress-row"><div class="progress-label"><span>${a}</span><span style="color:${col};font-family:Orbitron,monospace">${d}/km</span></div><div class="progress-track"><div class="progress-fill" style="width:${d/500*100}%;background:${col}"></div></div></div>`;}).join('');
+}
+function renderCapacityMonitor(){
+  const el = document.getElementById('capacityMonitor');
+  if(!el) return;
+  el.innerHTML = ROAD_NAMES.slice(0,6).map(r=>{const pct=rand(20,99);const col=pct>80?'var(--red)':pct>60?'var(--orange)':'var(--green)';return `<div class="progress-row"><div class="progress-label"><span>${r}</span><span style="color:${col}">${pct}%</span></div><div class="progress-track"><div class="progress-fill" style="width:${pct}%;background:${col}"></div></div></div>`;}).join('');
+}
+function renderConstructionZones(){
+  const el = document.getElementById('constructionZones');
+  if(!el) return;
+  const zones = [{road:'Oak Boulevard',desc:'Water pipe replacement',end:'Dec 15',impact:'2 lanes'},{road:'Tech Pkwy Junction',desc:'Flyover construction',end:'Mar 2025',impact:'Full closure 8PM-6AM'},{road:'Harbor Rd Overpass',desc:'Bridge maintenance',end:'Nov 30',impact:'1 lane'}];
+  el.innerHTML = zones.map(z=>`<div style="background:rgba(255,140,0,.05);border:1px solid rgba(255,140,0,.2);border-radius:6px;padding:8px 10px;margin-bottom:6px"><div style="font-size:.78rem;font-weight:600;color:var(--orange)">🚧 ${z.road}</div><div style="font-size:.7rem;color:var(--text2);margin-top:2px">${z.desc}</div><div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-orange">Until ${z.end}</span><span class="tag tag-red">${z.impact}</span></div></div>`).join('');
+}
+function renderSchoolZones(){
+  const el = document.getElementById('schoolZones');
+  if(!el) return;
+  const zones = [{name:'City Public School',time:'7:30-9:30 AM, 2-4 PM',speed:'20 km/h zone',active:true},{name:'Tech Academy',time:'8:00-9:00 AM, 3-4 PM',speed:'15 km/h zone',active:false},{name:'St. Mary\'s',time:'7:00-9:00 AM, 1-3 PM',speed:'20 km/h zone',active:true}];
+  el.innerHTML = zones.map(z=>`<div style="background:rgba(${z.active?'255,215,0':'5,8,16'},.05);border:1px solid rgba(${z.active?'255,215,0':'255,255,255'},.15);border-radius:6px;padding:8px 10px;margin-bottom:6px"><div style="font-size:.78rem;font-weight:600;color:${z.active?'var(--yellow)':'var(--text2)'}">🏫 ${z.name}</div><div style="font-size:.7rem;color:var(--text2);margin-top:2px">${z.time}</div><div style="display:flex;gap:6px;margin-top:4px"><span class="tag ${z.active?'tag-orange':'tag-green'}">${z.speed}</span><span class="tag ${z.active?'tag-orange':'tag-green'}">${z.active?'ACTIVE NOW':'Inactive'}</span></div></div>`).join('');
+}
+function renderHighwayMonitor(){
+  const el = document.getElementById('highwayMonitor');
+  if(!el) return;
+  el.innerHTML = `<table><thead><tr><th>Highway</th><th>Speed</th><th>Density</th><th>Status</th><th>Incidents</th></tr></thead><tbody>
+    ${['NH-48','NH-44','NH-8','SH-17','Ring Road Expy'].map(hw=>{const speed=rand(40,120);const dens=rand(50,95);const status=dens>80?'Congested':dens>60?'Moderate':'Clear';const col=status==='Congested'?'var(--red)':status==='Moderate'?'var(--orange)':'var(--green)';return `<tr><td style="font-weight:600">${hw}</td><td style="font-family:Orbitron,monospace">${speed}km/h</td><td>${dens}%</td><td><span class="tag" style="color:${col};border-color:${col};background:transparent">● ${status}</span></td><td>${rand(0,4)}</td></tr>`;}).join('')}
+  </tbody></table>`;
+}
+function renderIncidentList(){
+  const el = document.getElementById('incidentList');
+  if(!el||el.innerHTML) return;
+  const incidents = [
+    {type:'🚗 Collision',loc:'Main St / 5th Ave',sev:'Severe',time:'5m ago'},
+    {type:'🔥 Vehicle Fire',loc:'Highway 7, Km 23',sev:'Critical',time:'12m ago'},
+    {type:'⛽ Fuel Spill',loc:'Ring Road East',sev:'Moderate',time:'25m ago'},
+    {type:'🚧 Debris',loc:'Oak Boulevard',sev:'Minor',time:'33m ago'},
+  ];
+  el.innerHTML = incidents.map(i=>`<div style="background:rgba(255,51,102,.05);border:1px solid rgba(255,51,102,.15);border-radius:6px;padding:10px;margin-bottom:6px"><div style="font-size:.8rem;font-weight:600">${i.type}</div><div style="font-size:.7rem;color:var(--text2);margin:2px 0">📍 ${i.loc}</div><div style="display:flex;gap:6px;margin-top:4px"><span class="tag tag-red">${i.sev}</span><span style="font-size:.65rem;color:var(--text2)">${i.time}</span></div></div>`).join('');
+}
+function renderHotspots(){
+  const el = document.getElementById('hotspotList');
+  if(!el||el.innerHTML) return;
+  const spots = [
+    {loc:'Main/1st Intersection',count:rand(5,20),risk:'High'},
+    {loc:'Highway 7 Entry Ramp',count:rand(3,15),risk:'Very High'},
+    {loc:'Airport Roundabout',count:rand(2,10),risk:'Medium'},
+    {loc:'Old Town Market St',count:rand(4,12),risk:'High'},
+  ];
+  el.innerHTML = spots.map((s,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><div style="font-family:Orbitron,monospace;font-size:1rem;font-weight:700;color:var(--orange);min-width:24px">#${i+1}</div><div style="flex:1"><div style="font-size:.78rem;font-weight:600">${s.loc}</div><div style="font-size:.65rem;color:var(--text2)">${s.count} incidents last 30 days</div></div><span class="tag ${s.risk==='Very High'?'tag-red':'tag-orange'}">${s.risk}</span></div>`).join('');
+}
+function renderEvacuationRoutes(){
+  const el = document.getElementById('evacuationRoutes');
+  if(!el) return;
+  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px">
+    ${[{name:'Route Alpha',desc:'Downtown → North Highway → Assembly Point A',capacity:rand(2000,5000)+' vehicles/hr',status:'Clear'},{name:'Route Beta',desc:'East Quarter → Ring Road → Assembly Point B',capacity:rand(1500,4000)+' vehicles/hr',status:'Clear'},{name:'Route Gamma',desc:'Harbor → Coastal Road → Assembly Point C',capacity:rand(1000,3000)+' vehicles/hr',status:'Monitored'}].map(r=>`<div style="background:rgba(0,200,255,.03);border:1px solid rgba(0,200,255,.15);border-radius:6px;padding:10px"><div style="font-size:.82rem;font-weight:700;color:var(--cyan)">${r.name}</div><div style="font-size:.72rem;color:var(--text2);margin:4px 0">${r.desc}</div><div style="display:flex;gap:6px"><span class="tag tag-cyan">${r.capacity}</span><span class="tag tag-green">${r.status}</span></div></div>`).join('')}
+  </div>`;
+}
+function renderEmergencyRouting(){
+  const el = document.getElementById('emergencyRouting');
+  if(!el) return;
+  el.innerHTML = `<div style="font-size:.75rem;color:var(--text2);margin-bottom:8px">AI-optimized routes for emergency vehicles</div>
+    ${[{from:'Fire Station 3',to:'Harbor Bridge',type:'🚒',eta:rand(3,8)},{from:'Hospital A',to:'Accident Site',type:'🚑',eta:rand(2,6)},{from:'Police HQ',to:'Downtown',type:'🚓',eta:rand(1,5)}].map(r=>`<div style="background:rgba(255,51,102,.04);border:1px solid rgba(255,51,102,.15);border-radius:6px;padding:8px 10px;margin-bottom:6px;display:flex;align-items:center;gap:8px"><span style="font-size:1.2rem">${r.type}</span><div style="flex:1"><div style="font-size:.75rem">${r.from} → ${r.to}</div><div style="font-size:.65rem;color:var(--green)">Green corridor active • ${r.eta}min ETA</div></div></div>`).join('')}`;
+}
+function renderHazardReporting(){
+  const el = document.getElementById('hazardReporting');
+  if(!el) return;
+  el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
+    ${[{icon:'🕳️',name:'Pothole',count:rand(12,45)},{icon:'⚡',name:'Street Light Out',count:rand(5,20)},{icon:'🌊',name:'Waterlogging',count:rand(2,10)},{icon:'🐄',name:'Animals on Road',count:rand(0,8)},{icon:'🚗',name:'Abandoned Vehicle',count:rand(1,12)},{icon:'🗑️',name:'Debris/Garbage',count:rand(3,15)}].map(h=>`<div style="background:rgba(5,8,16,.8);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center;cursor:pointer;transition:all .2s" onclick="showToast('Reporting ${h.name}...','warning')" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'"><div style="font-size:1.8rem">${h.icon}</div><div style="font-size:.78rem;font-weight:600;margin-top:4px">${h.name}</div><div style="font-size:.65rem;color:var(--text2);margin-top:2px">${h.count} reports</div><button class="btn btn-orange btn-sm" style="margin-top:6px;width:100%">REPORT</button></div>`).join('')}
+  </div>`;
+}
+function renderCostEstimation(){
+  const el = document.getElementById('costEstimation');
+  if(!el) return;
+  const dist = randF(8,25);
+  el.innerHTML = `
+    <div style="margin-bottom:12px;font-size:.8rem;color:var(--text2)">For calculated route (${dist}km)</div>
+    ${[{type:'Petrol Car',fuel:'⛽',cost:rand(80,200),unit:'₹/liter',consumption:randF(10,18)+' km/l'},{type:'Diesel Car',fuel:'🛢️',cost:rand(70,170),unit:'₹/liter',consumption:randF(15,22)+' km/l'},{type:'Electric',fuel:'⚡',cost:rand(15,50),unit:'₹/kWh',consumption:randF(5,8)+' km/kWh'},{type:'CNG',fuel:'💨',cost:rand(40,90),unit:'₹/kg',consumption:randF(20,28)+' km/kg'}].map(v=>`<div style="background:rgba(5,8,16,.6);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:.78rem;font-weight:600">${v.fuel} ${v.type}</div><div style="font-size:.65rem;color:var(--text2)">${v.consumption}</div></div><div style="text-align:right"><div style="font-family:Orbitron,monospace;font-size:.9rem;font-weight:700;color:var(--yellow)">₹${v.cost}</div><div style="font-size:.6rem;color:var(--text2)">for route</div></div></div>`).join('')}`;
+}
+function renderMultiStop(){
+  const el = document.getElementById('multiStopPlanner');
+  if(!el) return;
+  let stops = ['Office','Mall','Pharmacy','Home'];
+  el.innerHTML = `<div id="stopList">${stops.map((s,i)=>`<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px"><span style="font-family:Orbitron,monospace;font-size:.75rem;color:var(--cyan);min-width:20px">${i+1}</span><input class="input" value="${s}" style="flex:1"><button class="btn btn-red btn-sm" onclick="removeStop(this)">✕</button></div>`).join('')}</div>
+    <button class="btn btn-cyan btn-sm" onclick="addStop()" style="width:100%;margin:6px 0">+ ADD STOP</button>
+    <button class="btn btn-green" onclick="optimizeMultiStop()" style="width:100%;margin-top:4px">🔄 OPTIMIZE ROUTE</button>
+    <div id="multiStopResult" style="margin-top:10px"></div>`;
+}
+function addStop(){
+  const list = document.getElementById('stopList');
+  const div = document.createElement('div');
+  div.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:6px';
+  div.innerHTML = `<span style="font-family:Orbitron,monospace;font-size:.75rem;color:var(--cyan);min-width:20px">${list.children.length+1}</span><input class="input" placeholder="Enter stop" style="flex:1"><button class="btn btn-red btn-sm" onclick="removeStop(this)">✕</button>`;
+  list.appendChild(div);
+}
+function removeStop(btn){btn.parentElement.remove();}
+function optimizeMultiStop(){
+  document.getElementById('multiStopResult').innerHTML = `<div class="route-result"><div style="color:var(--green);font-size:.8rem;margin-bottom:6px">✓ Optimized for minimum travel time</div><div style="font-size:.75rem;color:var(--text2)">Total distance: ${randF(8,30)}km • ETA: ${rand(25,80)}min • Fuel: ₹${rand(50,150)}</div></div>`;
+  showToast('Multi-stop route optimized!','success');
+}
+function renderDeliveryOptimizer(){
+  const el = document.getElementById('deliveryOptimizer');
+  if(!el) return;
+  el.innerHTML = `<div style="margin-bottom:10px;font-size:.78rem;color:var(--text2)">AI-powered delivery route for minimum time & fuel</div>
+    <div class="form-row"><div class="form-group"><label class="form-label">No. of Deliveries</label><input class="input" type="number" value="${rand(5,20)}" id="deliveryCount" min="1" max="50"></div></div>
+    <button class="btn btn-cyan" onclick="optimizeDelivery()" style="width:100%;margin-bottom:10px">⚡ OPTIMIZE DELIVERIES</button>
+    <div id="deliveryResult"></div>`;
+}
+function optimizeDelivery(){
+  const count = document.getElementById('deliveryCount')?.value||10;
+  document.getElementById('deliveryResult').innerHTML = `<div class="route-result"><div style="color:var(--cyan);font-family:Orbitron,monospace;font-size:.75rem;margin-bottom:8px">AI OPTIMIZED DELIVERY PLAN</div>${Array.from({length:Math.min(count,5)},(_,i)=>`<div class="route-step"><span class="route-icon">📦</span>Stop ${i+1}: ${choice(AREAS)} (ETA +${rand(5,30)}min)</div>`).join('')}${count>5?`<div style="font-size:.7rem;color:var(--text2);margin-top:6px">+${count-5} more stops optimized</div>`:''}<div style="margin-top:8px;font-size:.75rem;color:var(--green)">✓ Total: ${randF(20,80)}km • ${rand(90,300)}min • ₹${rand(200,600)} fuel</div></div>`;
+  showToast(`${count} deliveries optimized!`,'success');
+}
+function renderLostVehicleForm(){
+  const el = document.getElementById('lostVehicleForm');
+  if(!el) return;
+  el.innerHTML = `
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">Vehicle Number</label><input class="input" placeholder="e.g. KA01AB1234"></div>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">Vehicle Type</label><select class="input"><option>Car</option><option>Motorcycle</option><option>Truck</option><option>Bus</option></select></div>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">Color</label><input class="input" placeholder="e.g. Red"></div>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">Last Seen Location</label><input class="input" placeholder="Area or landmark"></div>
+    <button class="btn btn-red" onclick="reportLostVehicle()" style="width:100%">🚨 REPORT STOLEN/LOST</button>`;
+}
+function reportLostVehicle(){showToast('Lost vehicle reported to traffic police & cameras 🚓','success');}
+function renderFoundVehicles(){
+  const el = document.getElementById('foundVehicles');
+  if(!el||el.innerHTML) return;
+  el.innerHTML = `<table><thead><tr><th>Number</th><th>Type</th><th>Found At</th><th>Time</th></tr></thead><tbody>
+    ${[['MH04CD5678','Car','Harbor Lot A','2h ago'],['KA01AB9999','Motorcycle','Tech Park','5h ago'],['DL08EF3421','Car','North Police Stn','Yesterday']].map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}<td><button class="btn btn-cyan btn-sm" onclick="showToast('Claim submitted','success')">CLAIM</button></td></tr>`).join('')}
+  </tbody></table>`;
+}
+function renderCommunityAlerts(){
+  const el = document.getElementById('communityAlerts');
+  if(!el||el.innerHTML) return;
+  const alerts = ['🐄 Stray cattle reported near Tech Park ring road','🌊 Waterlogging at Market Street underpass','⚡ Street light out — Ring Road km 12','🚧 Unauthorized construction blocking Old Town lane'];
+  el.innerHTML = alerts.map(a=>`<div style="background:rgba(168,85,247,.04);border:1px solid rgba(168,85,247,.15);border-radius:6px;padding:10px;margin-bottom:6px;font-size:.78rem">${a}<div style="display:flex;justify-content:space-between;margin-top:6px"><span style="font-size:.65rem;color:var(--text2)">${rand(5,120)}min ago • ${rand(2,50)} upvotes</span><div style="display:flex;gap:4px"><button class="btn btn-sm" style="border-color:var(--green);color:var(--green)" onclick="showToast('Upvoted!','success')">👍</button><button class="btn btn-sm" style="border-color:var(--cyan);color:var(--cyan)" onclick="showToast('Shared!','info')">📤</button></div></div></div>`).join('');
+}
+function renderCityNotifications(){
+  const el = document.getElementById('cityNotifications');
+  if(!el||el.innerHTML) return;
+  const notifs = [
+    {icon:'📢',text:'New metro line inauguration: Line 4 opens next Sunday',time:'1h ago',type:'info'},
+    {icon:'🚦',text:'Smart traffic lights upgraded in Sector 12-15',time:'3h ago',type:'success'},
+    {icon:'🅿️',text:'New multilevel parking at Central Mall opening tomorrow',time:'5h ago',type:'info'},
+    {icon:'⚡',text:'20 new EV charging stations installed across the city',time:'Yesterday',type:'success'},
+  ];
+  el.innerHTML = notifs.map(n=>`<div style="background:rgba(0,200,255,.03);border:1px solid rgba(0,200,255,.1);border-radius:6px;padding:10px;margin-bottom:6px;display:flex;gap:10px"><span style="font-size:1.1rem">${n.icon}</span><div><div style="font-size:.78rem">${n.text}</div><div style="font-size:.65rem;color:var(--text2);margin-top:3px">${n.time}</div></div></div>`).join('');
+}
+function renderPostRide(){
+  const el = document.getElementById('postRide');
+  if(!el) return;
+  el.innerHTML = `
+    <div class="form-row"><div class="form-group"><label class="form-label">From</label><input class="input" placeholder="Pickup location"></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">To</label><input class="input" placeholder="Destination"></div></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Date</label><input class="input" type="date"></div>
+      <div class="form-group"><label class="form-label">Time</label><input class="input" type="time" value="08:00"></div>
+      <div class="form-group"><label class="form-label">Seats</label><input class="input" type="number" value="2" min="1" max="4"></div>
+    </div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Price per seat</label><input class="input" placeholder="₹" type="number" value="${rand(30,80)}"></div></div>
+    <button class="btn btn-purple" style="border-color:var(--purple);color:var(--purple);width:100%" onclick="showToast('Ride posted! Matching riders... 🚗','success')">POST RIDE</button>`;
+}
+
+// ==================== TICKER ====================
+function buildTicker(){
+  const items = [
+    {t:'alert-t',text:'⚠️ ACCIDENT: Highway 7 near km 34 — 2 lanes blocked'},
+    {t:'ok-t',text:'✅ Traffic cleared: Park Ave now flowing normally'},
+    {t:'info-t',text:'ℹ️ Metro Line 2: Minor delay of 4 minutes'},
+    {t:'alert-t',text:'⚠️ CONGESTION: Main St downtown — 25min avg delay'},
+    {t:'ok-t',text:'✅ New parking available: Central Mall Garage (48 spots)'},
+    {t:'info-t',text:'ℹ️ Bus 205 arriving in 3 minutes at Harbor Stop'},
+    {t:'alert-t',text:'🌧️ WEATHER: Heavy rain forecast 6-9 PM — plan ahead'},
+    {t:'info-t',text:'ℹ️ AQI: 87 (Moderate) — wear mask in downtown area'},
+    {t:'ok-t',text:'✅ Road reopened: Bridge St maintenance complete'},
+    {t:'info-t',text:'ℹ️ Digital twin simulation updated with latest traffic data'},
+  ];
+  const inner = document.getElementById('tickerInner');
+  inner.innerHTML = [...items,...items].map(i=>`<div class="ticker-item ${i.t}">${i.text}</div>`).join('');
+}
+
+// ==================== PARKING CHART ====================
+function renderParkingChart(){
+  if(document.getElementById('parkingChart')){
+    const hours = Array.from({length:12},(_,i)=>(i+7)+':00');
+    drawLineChart('parkingChart',hours,[{data:hours.map((_,i)=>rand(i*50,i*80+200)),color:'#a855f7',fill:'rgba(168,85,247,0.06)'}],{xLabels:true});
+  }
+}
+
+// ==================== ILLEGAL PARKING ====================
+function renderIllegalParking(){
+  const el = document.getElementById('illegalParking');
+  if(!el) return;
+  const violations = [
+    {loc:'Main St / No-Parking Zone',plate:'MH04XX1234',time:'12min ago',status:'Alert Sent'},
+    {loc:'Fire Hydrant — Oak Blvd',plate:'KA01YY5678',time:'25min ago',status:'Challan Issued'},
+    {loc:'Yellow Line — Harbor Rd',plate:'DL08ZZ9012',time:'1hr ago',status:'Towed'},
+  ];
+  el.innerHTML = violations.map(v=>`<div style="background:rgba(255,51,102,.04);border:1px solid rgba(255,51,102,.15);border-radius:6px;padding:10px;margin-bottom:6px">
+    <div style="font-size:.78rem;font-weight:600">📍 ${v.loc}</div>
+    <div style="font-size:.7rem;color:var(--text2);margin:3px 0">Plate: ${v.plate} • ${v.time}</div>
+    <span class="tag tag-red">${v.status}</span>
+  </div>`).join('');
+}
+function renderPriceComparison(){
+  const el = document.getElementById('pricingComparison');
+  if(!el) return;
+  const lots = S.parkingLots.slice(0,6).sort((a,b)=>a.price-b.price);
+  el.innerHTML = lots.map(l=>`<div class="progress-row"><div class="progress-label"><span>${l.name.substring(0,18)}</span><span style="color:var(--yellow);font-family:Orbitron,monospace;font-size:.72rem">₹${l.price}/hr</span></div><div class="progress-track"><div class="progress-fill" style="width:${l.price/100*100}%;background:${l.price<40?'var(--green)':l.price<65?'var(--orange)':'var(--red)'}"></div></div></div>`).join('');
+}
+
+// ==================== MODAL ====================
+function showModal(title, body){
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = body;
+  document.getElementById('mainModal').classList.add('open');
+}
+function closeModal(){document.getElementById('mainModal').classList.remove('open');}
+document.getElementById('mainModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+
+// ==================== TOAST ====================
+function showToast(msg, type='info'){
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  const icons = {success:'✅',error:'❌',warning:'⚠️',info:'ℹ️'};
+  toast.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+  container.appendChild(toast);
+  setTimeout(()=>{toast.style.opacity='0';toast.style.transform='translateX(20px)';toast.style.transition='all .3s';setTimeout(()=>toast.remove(),300);},3000);
+}
+
+// ==================== VOICE ====================
+function toggleVoice(){
+  S.voiceActive = !S.voiceActive;
+  const btn = document.getElementById('voice-btn');
+  if(S.voiceActive){
+    btn.style.background = 'rgba(168,85,247,0.3)';
+    showToast('Voice navigation activated 🎙','success');
+    if('speechSynthesis' in window){
+      const utter = new SpeechSynthesisUtterance('UrbanIQ voice navigation active. Say a command.');
+      window.speechSynthesis.speak(utter);
+    }
+  } else {
+    btn.style.background = 'rgba(168,85,247,0.1)';
+    if('speechSynthesis' in window) window.speechSynthesis.cancel();
+    showToast('Voice navigation deactivated','info');
+  }
+}
+
+// ==================== DARK MODE ====================
+function toggleDark(){
+  S.darkMode = !S.darkMode;
+  document.getElementById('darkmode-btn').textContent = S.darkMode?'🌙':'☀️';
+  document.documentElement.style.setProperty('--bg', S.darkMode?'#f0f4f8':'#050810');
+  document.documentElement.style.setProperty('--text', S.darkMode?'#1a2a3a':'#c8d8f0');
+  showToast(S.darkMode?'Light mode activated':'Dark mode activated','info');
+}
+
+// ==================== REALTIME UPDATES ====================
+let tick = 0;
+function realtimeUpdate(){
+  tick++;
+  // Animate vehicles on map
+  if(tick%2===0) animateVehicles();
+  // Cycle traffic lights
+  if(tick%3===0) cycleTrafficLights();
+  // Animate digital twin
+  animateTwin();
+  // Update bus ETAs
+  S.buses.forEach(b=>{b.eta=Math.max(1,b.eta-1+(Math.random()>.7?1:0));if(b.eta<=1){b.eta=rand(8,20);}});
+  // Update parking
+  if(tick%20===0){S.parkingLots.forEach(lot=>{lot.available=Math.max(0,Math.min(lot.total,lot.available+rand(-3,3)));});}
+  // Refresh visible live components
+  const sec = document.querySelector('.section.active')?.id;
+  if(sec==='sec-dashboard'){
+    if(tick%10===0) renderStats();
+    if(tick%15===0) renderHeatmap('heatmapGrid');
+  }
+  if(sec==='sec-transport'){
+    const busList = document.getElementById('busList');
+    if(busList&&tick%5===0) renderBuses();
+    if(tick%10===0) renderBusSchedule();
+  }
+  if(sec==='sec-parking'&&tick%15===0) renderParking();
+}
+
+// ==================== INIT ====================
+function init(){
+  buildNav();
+  generateVehicles();
+  generateBuses();
+  generateTrafficLights();
+  generateParking();
+  generateAlerts();
+  generateEnv();
+  // Dashboard
+  renderStats();
+  setTimeout(renderMap,100);
+  renderHeatmap('heatmapGrid');
+  renderAlerts();
+  renderRoadUsage();
+  setTimeout(renderTrafficChart,200);
+  // Traffic
+  renderSpeedMonitor();
+  renderDensityMonitor();
+  renderCapacityMonitor();
+  renderConstructionZones();
+  renderSchoolZones();
+  renderHighwayMonitor();
+  renderTrafficLights();
+  renderIncidentList();
+  renderHotspots();
+  // Navigation
+  renderAltRoutes('Downtown','Tech Park');
+  planEVRoute();
+  renderCostEstimation();
+  renderMultiStop();
+  renderDeliveryOptimizer();
+  // Transport
+  renderBuses();
+  renderBusSchedule();
+  renderBusOccupancy();
+  renderMetroLines();
+  renderCrowdPrediction();
+  renderTrainTracking();
+  renderTicketBooking();
+  renderFareCalc();
+  // Parking
+  renderParking();
+  renderIllegalParking();
+  renderPriceComparison();
+  setTimeout(renderParkingChart,300);
+  // Emergency
+  renderEmergency();
+  renderEmergencyRouting();
+  renderEvacuationRoutes();
+  renderHazardReporting();
+  // Citizen
+  renderCarpool();
+  renderShareOptions();
+  renderPostRide();
+  renderLostVehicleForm();
+  renderFoundVehicles();
+  renderCommunityAlerts();
+  renderCityNotifications();
+  renderReportHistory();
+  // Ticker
+  buildTicker();
+  // Settings
+  setTimeout(renderSettings,500);
+  // Live updates
+  setInterval(realtimeUpdate, 1000);
+  // Periodic data refresh
+  setInterval(()=>{
+    generateEnv();
+    if(document.getElementById('sec-environment').classList.contains('active')) renderEnv();
+  }, 15000);
+  // Occasional new alerts
+  setInterval(()=>{
+    const newAlerts = ['🚗 Minor accident detected at Sector 8','⛽ Fuel leak on Ring Road East','🌧️ Road flooded near Harbor Bridge','🚧 Pothole reported on Main Street'];
+    if(S.alerts.length<12){
+      S.alerts.unshift({t:'warning',icon:'⚠️',title:'Live Alert',desc:choice(newAlerts),time:'Just now',id:Date.now()});
+      renderAlerts();
+    }
+  }, 20000);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

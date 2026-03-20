@@ -3,8 +3,8 @@
    Until then, falls back to the canvas city renderer.
 */
 
-const GMAPS_API_KEY = 'YOUR_GOOGLE_MAPS_API_KEY'; // ← paste key here
-const GMAPS_READY   = GMAPS_API_KEY !== 'YOUR_GOOGLE_MAPS_API_KEY';
+const GMAPS_API_KEY = 'AIzaSyCsm0_T2ibKofiD0z6FBT-fAf6NVNctv2g'; // ← paste key here
+const GMAPS_READY   = GMAPS_API_KEY !== 'AIzaSyCsm0_T2ibKofiD0z6FBT-fAf6NVNctv2g';
 
 const MAP_INSTANCES = {}; // containerId → google.maps.Map
 const MAP_MARKERS   = {}; // containerId → marker array

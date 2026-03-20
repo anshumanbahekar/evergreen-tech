@@ -1,62 +1,70 @@
-/* UrbanIQ — ui.js: all rendering/drawing functions */
+/* UrbanIQ — ui.js: all render functions */
 
-/* ── NAV ─────────────────────────────────────────── */
-function renderNav() {
-  const sections = [
-    { id: 'dashboard',    label: 'Dashboard',    ic: 'chart' },
-    { id: 'traffic',      label: 'Traffic',      ic: 'traffic' },
-    { id: 'navigation',   label: 'Navigation',   ic: 'route' },
-    { id: 'transport',    label: 'Transport',    ic: 'bus' },
-    { id: 'parking',      label: 'Parking',      ic: 'parking' },
-    { id: 'emergency',    label: 'Emergency',    ic: 'emergency' },
-    { id: 'environment',  label: 'Environment',  ic: 'leaf' },
-    { id: 'citizen',      label: 'Citizen',      ic: 'users' },
-    { id: 'analytics',    label: 'Analytics',    ic: 'activity' },
-    { id: 'advanced',     label: 'Advanced',     ic: 'robot' },
-    { id: 'settings',     label: 'Settings',     ic: 'settings' },
+/* ── NAV ──────────────────────────────────────── */
+function renderNav(){
+  const tabs=[
+    {id:'dashboard',  label:'Dashboard',   ic:'chart'},
+    {id:'traffic',    label:'Traffic',     ic:'traffic'},
+    {id:'navigation', label:'Navigation',  ic:'route'},
+    {id:'transport',  label:'Transport',   ic:'bus'},
+    {id:'parking',    label:'Parking',     ic:'parking'},
+    {id:'emergency',  label:'Emergency',   ic:'emergency'},
+    {id:'environment',label:'Environment', ic:'leaf'},
+    {id:'citizen',    label:'Citizen',     ic:'users'},
+    {id:'analytics',  label:'Analytics',  ic:'activity'},
+    {id:'advanced',   label:'Advanced',    ic:'robot'},
+    {id:'settings',   label:'Settings',    ic:'settings'},
   ];
-  const nav = document.getElementById('nav-tabs');
-  if (!nav) return;
-  nav.innerHTML = sections.map(s =>
-    `<button class="nav-tab${s.id === 'dashboard' ? ' active' : ''}" onclick="switchSection('${s.id}', this)">
-      ${icon(s.ic, 'nav-ic')} ${s.label}
-    </button>`
-  ).join('');
+  const el=document.getElementById('nav-tabs');
+  if(!el) return;
+  el.innerHTML=tabs.map(t=>`
+    <button class="nav-tab${t.id==='dashboard'?' active':''}" onclick="switchSection('${t.id}',this)">
+      ${icon(t.ic,'nav-ic')} ${t.label}
+    </button>`).join('');
 }
 
-/* ── TICKER ──────────────────────────────────────── */
-function renderTicker() {
-  const items = [
+/* ── TICKER ───────────────────────────────────── */
+function renderTicker(){
+  const el=document.getElementById('ticker-text');
+  if(!el) return;
+  const items=[
     'Traffic flow normal on Highway 7',
-    'Bus Route 42 delayed by 8 mins due to congestion',
-    'Air Quality: GOOD — AQI 47',
-    'Parking Lot C reaching capacity (92%)',
+    `Bus Route 101 ETA: ${R(2,8)} min`,
+    `Air Quality Index: ${S.env.find(e=>e.id==='aqi')?.val||47} — ${S.env.find(e=>e.id==='aqi')?.val>100?'Moderate':'Good'}`,
+    `Parking Lot C: ${S.parking[2]?.free||45} spots available`,
     'Smart signal optimization active at 12 intersections',
-    'EV Charging Zone A: 3 of 8 stations available',
+    `EV Charging: ${R(3,8)} of 10 stations available`,
     'Road works on Oak Ave — expect delays',
-    'Emergency vehicle corridor active: 5th Ave',
-    'Carpool matching: 14 new rides available',
+    `${S.vehicles.filter(v=>v.type==='emergency').length} emergency vehicles active`,
+    `${S.carpools.length} carpool matches available now`,
     'Drone delivery corridor operational — Zone 3',
+    `Temperature: ${S.env.find(e=>e.id==='temp')?.val||32}°C`,
+    `${S.trafficLights.filter(t=>t.mode==='AI Adaptive').length} intersections on AI control`,
   ];
-  const t = document.getElementById('ticker-text');
-  if (t) t.textContent = items.join('   •   ') + '   •   ';
+  el.textContent = items.join('   •   ') + '   •   ';
 }
 
-/* ── DASHBOARD STATS ─────────────────────────────── */
-function renderStats() {
-  const cards = [
-    { label: 'Vehicles Online',  val: S.vehicles.length, unit: '',   trend: '+3%',  ic: 'car',        col: 'g' },
-    { label: 'Active Incidents', val: S.alerts.filter(a=>a.sev==='critical').length, unit: '', trend: '-1', ic: 'alert', col: 'r' },
-    { label: 'Buses On-Time',    val: S.buses.filter(b=>!b.delay).length, unit: `/${S.buses.length}`, trend: 'Live', ic: 'bus', col: 'b' },
-    { label: 'Parking Free',     val: S.parking.reduce((a,p)=>a+p.free,0), unit: ' spots', trend: 'Live', ic: 'parking', col: 'o' },
-    { label: 'AQI Index',        val: S.env.find(e=>e.id==='aqi')?.val || 47, unit: '', trend: 'Good', ic: 'leaf', col: 'g' },
-    { label: 'Avg Speed',        val: Math.round(S.vehicles.reduce((a,v)=>a+v.speed,0)/Math.max(S.vehicles.length,1)), unit: ' km/h', trend: 'Normal', ic: 'activity', col: 'p' },
-    { label: 'Smart Lights',     val: S.trafficLights.length, unit: ' active', trend: 'AI Mode', ic: 'zap', col: 'y' },
-    { label: 'CO₂ Saved',        val: '1.2', unit: 't today', trend: '+0.2t', ic: 'recycle', col: 'g' },
+/* ── STAT CARDS ───────────────────────────────── */
+function renderStats(){
+  const el=document.getElementById('stat-cards');
+  if(!el) return;
+  const totalFree = S.parking.reduce((a,p)=>a+p.free, 0);
+  const onTime = S.buses.filter(b=>!b.delay).length;
+  const avgSpeed = S.vehicles.length
+    ? Math.round(S.vehicles.reduce((a,v)=>a+v.speed,0)/S.vehicles.length) : 0;
+  const activeAlerts = S.alerts.filter(a=>!a.dismissed&&(a.sev==='critical'||a.sev==='warning')).length;
+  const aqiVal = S.env.find(e=>e.id==='aqi')?.val||47;
+  const cards=[
+    {label:'Vehicles Live',  val:S.vehicles.length,             unit:'',         trend:'+3 last hr', ic:'car',      col:'g'},
+    {label:'Active Alerts',  val:activeAlerts,                  unit:'',         trend:S.alerts.filter(a=>a.sev==='critical'&&!a.dismissed).length+' critical', ic:'alert', col:'r'},
+    {label:'Buses On-Time',  val:onTime,                        unit:`/${S.buses.length}`,    trend:'Live',     ic:'bus',      col:'b'},
+    {label:'Parking Free',   val:totalFree,                     unit:' spots',   trend:'Live',     ic:'parking',  col:'o'},
+    {label:'AQI Index',      val:aqiVal,                        unit:'',         trend:aqiVal<100?'Good':'Moderate', ic:'leaf', col:'g'},
+    {label:'Avg Speed',      val:avgSpeed,                      unit:' km/h',    trend:'Normal',   ic:'activity', col:'p'},
+    {label:'Smart Lights',   val:S.trafficLights.length,        unit:' active',  trend:'AI Mode',  ic:'zap',      col:'y'},
+    {label:'CO₂ Saved',      val:'1.2',                         unit:'t today',  trend:'+0.2t',    ic:'recycle',  col:'g'},
   ];
-  const el = document.getElementById('stat-cards');
-  if (!el) return;
-  el.innerHTML = cards.map(c => `
+  el.innerHTML=cards.map(c=>`
     <div class="stat-card stat-${c.col}">
       <div class="stat-icon">${icon(c.ic)}</div>
       <div class="stat-body">
@@ -64,360 +72,332 @@ function renderStats() {
         <div class="stat-label">${c.label}</div>
       </div>
       <div class="stat-trend">${c.trend}</div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-/* ── MAP ─────────────────────────────────────────── */
-function renderMap(containerId = 'main-map') {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-
-  const W = el.clientWidth || 600, H = el.clientHeight || 380;
-
-  // Road grid definitions
-  const roads = [
-    // horizontal
-    { x1:0,   y1:80,  x2:W,   y2:80,  w:14, cong: R(0,2) },
-    { x1:0,   y1:180, x2:W,   y2:180, w:10, cong: R(0,2) },
-    { x1:0,   y1:280, x2:W,   y2:280, w:10, cong: R(0,2) },
-    // vertical
-    { x1:100, y1:0,   x2:100, y2:H,   w:14, cong: R(0,2) },
-    { x1:280, y1:0,   x2:280, y2:H,   w:10, cong: R(0,2) },
-    { x1:460, y1:0,   x2:460, y2:H,   w:10, cong: R(0,2) },
+/* ── MAP ──────────────────────────────────────── */
+function renderMap(containerId='main-map'){
+  const el=document.getElementById(containerId);
+  if(!el) return;
+  const W=el.clientWidth||640, H=el.clientHeight||360;
+  const cong=['#22c55e','#f59e0b','#ef4444'];
+  const roads=[
+    {x1:0,y1:H*.22,x2:W,y2:H*.22,w:14,c:R(0,2)},
+    {x1:0,y1:H*.5, x2:W,y2:H*.5, w:10,c:R(0,2)},
+    {x1:0,y1:H*.75,x2:W,y2:H*.75,w:10,c:R(0,2)},
+    {x1:W*.15,y1:0,x2:W*.15,y2:H,w:14,c:R(0,2)},
+    {x1:W*.45,y1:0,x2:W*.45,y2:H,w:10,c:R(0,2)},
+    {x1:W*.75,y1:0,x2:W*.75,y2:H,w:10,c:R(0,2)},
   ];
-
-  const congColors = ['#22c55e','#f59e0b','#ef4444'];
-
-  let vehiclesSvg = S.vehicles.slice(0, 40).map(v => {
-    const cx = (v.x / 100) * W;
-    const cy = (v.y / 100) * H;
-    const col = v.type === 'emergency' ? '#ef4444' : v.type === 'bus' ? '#3b82f6' : '#166534';
-    return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${v.type==='bus'?6:4}" fill="${col}" opacity="0.85" class="map-vehicle" data-id="${v.id}"/>`;
+  const blocks=[
+    [W*.17,H*.02,W*.26,H*.18],[W*.47,H*.02,W*.26,H*.18],[W*.77,H*.02,W*.2,H*.18],
+    [W*.17,H*.25,W*.26,H*.22],[W*.47,H*.25,W*.26,H*.22],[W*.77,H*.25,W*.2,H*.22],
+    [W*.17,H*.52,W*.26,H*.2], [W*.47,H*.52,W*.26,H*.2], [W*.77,H*.52,W*.2,H*.2],
+    [W*.17,H*.77,W*.26,H*.2], [W*.47,H*.77,W*.26,H*.2], [W*.77,H*.77,W*.2,H*.2],
+  ];
+  const intersections=[
+    [W*.15,H*.22],[W*.45,H*.22],[W*.75,H*.22],
+    [W*.15,H*.5], [W*.45,H*.5], [W*.75,H*.5],
+    [W*.15,H*.75],[W*.45,H*.75],[W*.75,H*.75],
+  ];
+  const dots=S.vehicles.slice(0,50).map(v=>{
+    const cx=((v.x/100)*W).toFixed(1), cy=((v.y/100)*H).toFixed(1);
+    const col=v.type==='emergency'?'#ef4444':v.type==='bus'?'#3b82f6':'#166534';
+    const r=v.type==='bus'?6:v.type==='emergency'?7:4;
+    return `<circle class="mv" cx="${cx}" cy="${cy}" r="${r}" fill="${col}" opacity="0.85" data-id="${v.id}"/>`;
   }).join('');
-
-  let incidentsSvg = S.alerts.filter(a=>a.sev==='critical').slice(0,3).map((a,i) => {
-    const cx = R(60,W-60), cy = R(40,H-40);
-    return `<g transform="translate(${cx},${cy})">
-      <circle r="10" fill="#fef2f2" stroke="#ef4444" stroke-width="2"/>
-      <text x="0" y="4" text-anchor="middle" font-size="10" fill="#ef4444">!</text>
-    </g>`;
+  const incidents=S.alerts.filter(a=>a.sev==='critical'&&!a.dismissed).slice(0,3).map(()=>{
+    const cx=R(80,W-80), cy=R(40,H-40);
+    return `<g transform="translate(${cx},${cy})"><circle r="11" fill="#fef2f2" stroke="#ef4444" stroke-width="2.5"/><text x="0" y="4.5" text-anchor="middle" font-size="11" fill="#ef4444" font-weight="bold">!</text></g>`;
   }).join('');
-
-  el.innerHTML = `
-    <svg width="100%" height="100%" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" class="map-svg">
+  el.innerHTML=`
+    <svg id="map-svg-${containerId}" width="100%" height="100%" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="display:block">
       <rect width="${W}" height="${H}" fill="#f0fdf4"/>
-      <!-- City blocks -->
-      ${[[110,90,160,80],[290,90,160,80],[110,190,160,80],[290,190,160,80],[110,290,160,70],[290,290,160,70]].map(
-        ([x,y,w,h]) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="4" fill="#dcfce7" stroke="#bbf7d0" stroke-width="1"/>`
-      ).join('')}
-      <!-- Roads -->
-      ${roads.map(r => `<line x1="${r.x1}" y1="${r.y1}" x2="${r.x2}" y2="${r.y2}" stroke="${congColors[r.cong]}" stroke-width="${r.w}" stroke-linecap="round" opacity="0.8"/>`).join('')}
-      <!-- Intersections -->
-      ${[[100,80],[280,80],[460,80],[100,180],[280,180],[460,180],[100,280],[280,280],[460,280]].map(
-        ([x,y]) => `<circle cx="${x}" cy="${y}" r="8" fill="#fff" stroke="#16a34a" stroke-width="2"/>`
-      ).join('')}
-      <!-- Vehicles -->
-      ${vehiclesSvg}
-      <!-- Incidents -->
-      ${incidentsSvg}
-      <!-- Labels -->
-      <text x="8" y="14" font-size="9" fill="#15803d" font-family="DM Mono,monospace">LIVE MAP</text>
-      <circle cx="60" cy="10" r="4" fill="#22c55e"><animate attributeName="opacity" values="1;0.2;1" dur="1.5s" repeatCount="indefinite"/></circle>
+      ${blocks.map(([x,y,w,h])=>`<rect x="${x.toFixed(0)}" y="${y.toFixed(0)}" width="${w.toFixed(0)}" height="${h.toFixed(0)}" rx="5" fill="#dcfce7" stroke="#bbf7d0"/>`).join('')}
+      ${roads.map(r=>`<line x1="${r.x1.toFixed(0)}" y1="${r.y1.toFixed(0)}" x2="${r.x2.toFixed(0)}" y2="${r.y2.toFixed(0)}" stroke="${cong[r.c]}" stroke-width="${r.w}" stroke-linecap="round" opacity="0.85"/>`).join('')}
+      ${intersections.map(([x,y])=>`<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="9" fill="#fff" stroke="#16a34a" stroke-width="2"/>`).join('')}
+      ${dots}
+      ${incidents}
+      <text x="10" y="16" font-size="10" fill="#15803d" font-family="DM Mono,monospace" font-weight="bold">LIVE MAP</text>
+      <circle cx="72" cy="12" r="5" fill="#22c55e"><animate attributeName="opacity" values="1;0.2;1" dur="1.2s" repeatCount="indefinite"/></circle>
     </svg>
     <div class="map-legend">
       <span class="leg-item"><span class="leg-dot" style="background:#166534"></span>Car</span>
       <span class="leg-item"><span class="leg-dot" style="background:#3b82f6"></span>Bus</span>
       <span class="leg-item"><span class="leg-dot" style="background:#ef4444"></span>Emergency</span>
-      <span class="leg-item"><span class="leg-dot" style="background:#f59e0b"></span>Congested</span>
+      <span class="leg-item"><span class="leg-dot" style="background:#22c55e"></span>Clear</span>
+      <span class="leg-item"><span class="leg-dot" style="background:#f59e0b"></span>Slow</span>
+      <span class="leg-item"><span class="leg-dot" style="background:#ef4444"></span>Jammed</span>
     </div>`;
 }
 
-function animateVehicles() {
-  if (!S.mapRunning) return;
-  S.vehicles.forEach(v => {
-    v.x += v.dx * v.speed * 0.01;
-    v.y += v.dy * v.speed * 0.01;
-    if (v.x < 0) v.x = 100;
-    if (v.x > 100) v.x = 0;
-    if (v.y < 0) v.y = 100;
-    if (v.y > 100) v.y = 0;
-  });
-  // Update dots without full re-render
-  document.querySelectorAll('.map-vehicle').forEach((dot, i) => {
-    const v = S.vehicles[i];
-    if (!v) return;
-    const el = dot.closest('svg');
-    if (!el) return;
-    const W = el.clientWidth || 600, H = el.clientHeight || 380;
-    dot.setAttribute('cx', ((v.x / 100) * W).toFixed(1));
-    dot.setAttribute('cy', ((v.y / 100) * H).toFixed(1));
+function animateVehicles(containerId='main-map'){
+  const el=document.getElementById(containerId);
+  if(!el) return;
+  const svg=el.querySelector('svg');
+  if(!svg) return;
+  const W=svg.viewBox.baseVal.width||640, H=svg.viewBox.baseVal.height||360;
+  const dots=el.querySelectorAll('.mv');
+  dots.forEach((dot,i)=>{
+    const v=S.vehicles[i]; if(!v) return;
+    dot.setAttribute('cx',((v.x/100)*W).toFixed(1));
+    dot.setAttribute('cy',((v.y/100)*H).toFixed(1));
   });
 }
 
-/* ── HEATMAP ─────────────────────────────────────── */
-function renderHeatmap(containerId) {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-  const cols = 12, rows = 8;
-  let html = '<div class="heatmap-grid">';
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const v = RF(0, 1);
-      const alpha = (v * 0.85 + 0.05).toFixed(2);
-      const hue = v > 0.7 ? '0' : v > 0.4 ? '40' : '120';
-      html += `<div class="hmap-cell" style="background:hsla(${hue},80%,50%,${alpha})" title="${(v*100).toFixed(0)}%"></div>`;
-    }
-  }
-  html += '</div>';
-  el.innerHTML = html;
+/* ── HEATMAP ──────────────────────────────────── */
+function renderHeatmap(id){
+  const el=document.getElementById(id); if(!el) return;
+  const cols=14, rows=8;
+  el.innerHTML=`<div class="heatmap-grid" style="grid-template-columns:repeat(${cols},1fr)">
+    ${Array.from({length:cols*rows},()=>{
+      const v=Math.random();
+      const h=v>0.7?'0':v>0.4?'38':'120';
+      const a=(v*0.8+0.1).toFixed(2);
+      return `<div class="hmap-cell" style="background:hsla(${h},85%,48%,${a})" title="${(v*100).toFixed(0)}%"></div>`;
+    }).join('')}
+  </div>`;
 }
 
-/* ── CANVAS LINE CHART ───────────────────────────── */
-function drawLineChart(canvasId, labels, datasets) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width = canvas.offsetWidth || 500;
-  const H = canvas.height = 200;
-  const pad = { t: 20, r: 20, b: 36, l: 40 };
-  const cW = W - pad.l - pad.r;
-  const cH = H - pad.t - pad.b;
-
-  ctx.clearRect(0, 0, W, H);
-
-  // Grid
-  ctx.strokeStyle = '#dcfce7';
-  ctx.lineWidth = 1;
-  for (let i = 0; i <= 4; i++) {
-    const y = pad.t + (cH / 4) * i;
-    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(W - pad.r, y); ctx.stroke();
+/* ── CANVAS CHART ─────────────────────────────── */
+function drawLineChart(canvasId, labels, datasets){
+  const canvas=document.getElementById(canvasId); if(!canvas) return;
+  canvas.width=canvas.offsetWidth||500;
+  canvas.height=200;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  const pad={t:18,r:18,b:32,l:44};
+  const cW=W-pad.l-pad.r, cH=H-pad.t-pad.b;
+  ctx.clearRect(0,0,W,H);
+  const allVals=datasets.flatMap(d=>d.data);
+  const maxV=Math.max(...allVals)*1.1||1;
+  // grid
+  ctx.strokeStyle='#dcfce7'; ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=pad.t+(cH/4)*i;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+    ctx.fillStyle='#86efac'; ctx.font='10px DM Mono,monospace'; ctx.textAlign='right';
+    ctx.fillText(Math.round(maxV*(1-i/4)),pad.l-4,y+4);
   }
-
-  // X labels
-  ctx.fillStyle = '#86efac';
-  ctx.font = '10px DM Mono, monospace';
-  ctx.textAlign = 'center';
-  labels.forEach((lbl, i) => {
-    const x = pad.l + (i / (labels.length - 1)) * cW;
-    ctx.fillText(lbl, x, H - 6);
+  // x labels
+  ctx.fillStyle='#86efac'; ctx.font='10px DM Mono,monospace'; ctx.textAlign='center';
+  labels.forEach((lbl,i)=>{
+    const x=pad.l+(i/(labels.length-1))*cW;
+    ctx.fillText(lbl,x,H-4);
   });
-
-  // Lines
-  datasets.forEach(ds => {
-    const max = Math.max(...datasets.flatMap(d => d.data)) * 1.1;
-    ctx.strokeStyle = ds.color || '#22c55e';
-    ctx.lineWidth = 2.5;
-    ctx.lineJoin = 'round';
+  // lines + fills
+  datasets.forEach(ds=>{
+    ctx.strokeStyle=ds.color||'#22c55e';
+    ctx.lineWidth=2.5; ctx.lineJoin='round';
     ctx.beginPath();
-    ds.data.forEach((val, i) => {
-      const x = pad.l + (i / (ds.data.length - 1)) * cW;
-      const y = pad.t + cH - (val / max) * cH;
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    ds.data.forEach((val,i)=>{
+      const x=pad.l+(i/(ds.data.length-1))*cW;
+      const y=pad.t+cH-(val/maxV)*cH;
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
     });
     ctx.stroke();
-
-    // Fill
-    ctx.save();
-    ctx.globalAlpha = 0.12;
-    ctx.fillStyle = ds.color || '#22c55e';
+    ctx.save(); ctx.globalAlpha=0.1; ctx.fillStyle=ds.color||'#22c55e';
     ctx.beginPath();
-    ds.data.forEach((val, i) => {
-      const x = pad.l + (i / (ds.data.length - 1)) * cW;
-      const y = pad.t + cH - (val / max) * cH;
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    ds.data.forEach((val,i)=>{
+      const x=pad.l+(i/(ds.data.length-1))*cW;
+      const y=pad.t+cH-(val/maxV)*cH;
+      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
     });
-    ctx.lineTo(pad.l + cW, pad.t + cH);
-    ctx.lineTo(pad.l, pad.t + cH);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
+    ctx.lineTo(pad.l+cW,pad.t+cH); ctx.lineTo(pad.l,pad.t+cH);
+    ctx.closePath(); ctx.fill(); ctx.restore();
   });
 }
 
-function renderTrafficChart() {
-  const labels = ['0','2','4','6','8','10','12','14','16','18','20','22'];
-  const flow = [120,80,60,200,480,520,390,440,510,560,400,200];
-  const speed = [65,70,72,55,38,35,45,40,36,32,48,60];
-  drawLineChart('traffic-chart', labels, [
-    { data: flow,  color: '#22c55e' },
-    { data: speed, color: '#3b82f6' },
-  ]);
+function renderTrafficChart(){
+  drawLineChart('traffic-chart',
+    ['0','2','4','6','8','10','12','14','16','18','20','22'],
+    [
+      {data:[120,80,60,210,490,530,410,450,520,570,410,200],color:'#22c55e'},
+      {data:[65,70,72,52,36,33,44,40,34,30,46,62],color:'#3b82f6'},
+    ]
+  );
 }
 
-/* ── ALERTS ──────────────────────────────────────── */
-function renderAlerts(containerId = 'alert-list') {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-  const visible = S.alerts.filter(a => !a.dismissed);
-  if (!visible.length) {
-    el.innerHTML = '<div class="empty-state">No active alerts</div>';
-    return;
-  }
-  el.innerHTML = visible.map(a => `
-    <div class="alert-item alert-${a.sev}" id="alert-${a.id}">
-      <div class="alert-icon">${icon(a.sev === 'critical' ? 'alert' : a.sev === 'warning' ? 'info' : 'check')}</div>
+/* ── ALERTS ───────────────────────────────────── */
+function renderAlerts(containerId='alert-list'){
+  const el=document.getElementById(containerId); if(!el) return;
+  const visible=S.alerts.filter(a=>!a.dismissed);
+  if(!visible.length){el.innerHTML='<div class="empty-state">No active alerts</div>';return;}
+  el.innerHTML=visible.map(a=>`
+    <div class="alert-item alert-${a.sev}" id="al-${a.id}">
+      <div class="alert-icon">${icon(a.ic||'alert')}</div>
       <div class="alert-body">
         <div class="alert-title">${a.title}</div>
-        <div class="alert-sub">${a.msg} &nbsp;•&nbsp; ${a.time}</div>
+        <div class="alert-sub">${a.msg} &nbsp;•&nbsp; <em>${a.time}</em></div>
       </div>
-      <button class="btn-xs btn-ghost" onclick="dismissAlert(${a.id})">Dismiss</button>
-    </div>
-  `).join('');
+      <button class="btn-xs btn-ghost" onclick="dismissAlert(${a.id})">✕</button>
+    </div>`).join('');
 }
 
-function dismissAlert(id) {
-  const a = S.alerts.find(x => x.id === id);
-  if (a) a.dismissed = true;
-  renderAlerts();
-  renderAlerts('alert-list-dash');
+function dismissAlert(id){
+  const a=S.alerts.find(x=>x.id===id);
+  if(a) a.dismissed=true;
+  document.querySelectorAll(`#al-${id}`).forEach(el=>{
+    el.style.opacity='0'; el.style.transform='translateX(20px)'; el.style.transition='.3s';
+    setTimeout(()=>el.remove(),300);
+  });
+  setTimeout(()=>renderStats(),350);
 }
 
-/* ── ROAD USAGE ──────────────────────────────────── */
-function renderRoadUsage() {
-  const el = document.getElementById('road-usage');
-  if (!el) return;
-  const roads = ROADS.map(r => ({ name: r, usage: R(20, 98) }));
-  el.innerHTML = roads.map(r => {
-    const cls = r.usage > 75 ? 'bar-r' : r.usage > 50 ? 'bar-o' : 'bar-g';
-    return `<div class="road-row">
-      <span class="road-name">${r.name}</span>
-      <div class="progress-wrap"><div class="progress-bar ${cls}" style="width:${r.usage}%"></div></div>
-      <span class="road-pct">${r.usage}%</span>
-    </div>`;
-  }).join('');
+/* ── ROAD USAGE ───────────────────────────────── */
+function renderRoadUsage(){
+  const el=document.getElementById('road-usage'); if(!el) return;
+  const data=ROADS.map(r=>({name:r,pct:R(15,98)}));
+  el.innerHTML=data.map(d=>`
+    <div class="road-row">
+      <span class="road-name">${d.name}</span>
+      <div class="progress-wrap"><div class="progress-bar ${d.pct>75?'bar-r':d.pct>50?'bar-o':'bar-g'}" style="width:${d.pct}%"></div></div>
+      <span class="road-pct">${d.pct}%</span>
+    </div>`).join('');
 }
 
-/* ── TRAFFIC LIGHTS ──────────────────────────────── */
-function renderTrafficLights() {
-  const el = document.getElementById('tl-grid');
-  if (!el) return;
-  el.innerHTML = S.trafficLights.map(tl => {
-    const phases = ['red','yellow','green'];
-    return `
+/* ── TRAFFIC LIGHTS ───────────────────────────── */
+function renderTrafficLights(){
+  const el=document.getElementById('tl-grid'); if(!el) return;
+  el.innerHTML=S.trafficLights.map(tl=>`
     <div class="tl-card" id="tl-${tl.id}">
       <div class="tl-label">${tl.name}</div>
       <div class="tl-pole">
-        ${phases.map(p => `<div class="tl-light tl-${p}${tl.phase===p?' active':''}"></div>`).join('')}
+        <div class="tl-light tl-red${tl.phase==='red'?' active':''}"></div>
+        <div class="tl-light tl-yellow${tl.phase==='yellow'?' active':''}"></div>
+        <div class="tl-light tl-green${tl.phase==='green'?' active':''}"></div>
       </div>
       <div class="tl-meta">
-        <span class="tag tag-${tl.phase==='green'?'g':tl.phase==='yellow'?'y':'r'}">${tl.phase.toUpperCase()}</span>
+        <span class="tag ${tl.phase==='green'?'tag-g':tl.phase==='yellow'?'tag-y':'tag-r'}">${tl.phase.toUpperCase()}</span>
         <span class="tl-timer">${tl.timer}s</span>
       </div>
-      <div class="tl-mode">${icon('cpu','sm-ic')} ${tl.mode}</div>
-    </div>`;
-  }).join('');
+      <div class="tl-mode">${tl.mode}</div>
+      <div class="tl-waiting">${icon('users','xs-ic')} ${tl.waiting} waiting</div>
+    </div>`).join('');
 }
 
-function cycleTrafficLights() {
-  const order = ['red','yellow','green'];
-  S.trafficLights.forEach(tl => {
+function cycleTrafficLights(){
+  const order=['red','yellow','green'];
+  S.trafficLights.forEach(tl=>{
     tl.timer--;
-    if (tl.timer <= 0) {
-      const idx = order.indexOf(tl.phase);
-      tl.phase = order[(idx + 1) % 3];
-      tl.timer = tl.phase === 'green' ? R(20,45) : tl.phase === 'yellow' ? R(4,8) : R(15,35);
+    if(tl.timer<=0){
+      const idx=order.indexOf(tl.phase);
+      tl.phase=order[(idx+1)%3];
+      tl.timer=tl.phase==='green'?R(20,45):tl.phase==='yellow'?R(4,7):R(15,35);
+      tl.waiting=R(0,25);
     }
-    const card = document.getElementById(`tl-${tl.id}`);
-    if (card) {
-      card.querySelectorAll('.tl-light').forEach((l, i) => {
-        l.classList.toggle('active', order[i] === tl.phase);
-      });
-      const timerEl = card.querySelector('.tl-timer');
-      if (timerEl) timerEl.textContent = tl.timer + 's';
-      const tagEl = card.querySelector('.tag');
-      if (tagEl) {
-        tagEl.className = `tag tag-${tl.phase==='green'?'g':tl.phase==='yellow'?'y':'r'}`;
-        tagEl.textContent = tl.phase.toUpperCase();
-      }
-    }
+    const card=document.getElementById(`tl-${tl.id}`); if(!card) return;
+    ['red','yellow','green'].forEach((p,i)=>{
+      card.querySelectorAll('.tl-light')[i]?.classList.toggle('active',tl.phase===p);
+    });
+    const t=card.querySelector('.tl-timer'); if(t) t.textContent=tl.timer+'s';
+    const tag=card.querySelector('.tag');
+    if(tag){tag.className=`tag ${tl.phase==='green'?'tag-g':tl.phase==='yellow'?'tag-y':'tag-r'}`;tag.textContent=tl.phase.toUpperCase();}
+    const w=card.querySelector('.tl-waiting'); if(w) w.innerHTML=`${icon('users','xs-ic')} ${tl.waiting} waiting`;
   });
 }
 
-/* ── PARKING ─────────────────────────────────────── */
-function renderParking() {
-  const el = document.getElementById('parking-grid');
-  if (!el) return;
-  el.innerHTML = S.parking.map(p => {
-    const pct = Math.round((p.free / p.total) * 100);
-    const cls = pct < 15 ? 'park-full' : pct < 40 ? 'park-busy' : 'park-ok';
+/* ── PARKING ──────────────────────────────────── */
+function renderParking(filter=''){
+  const el=document.getElementById('parking-grid'); if(!el) return;
+  let lots=S.parking;
+  if(filter==='ev') lots=lots.filter(p=>p.ev);
+  if(filter==='ug') lots=lots.filter(p=>p.underground);
+  el.innerHTML=lots.map(p=>{
+    const pct=Math.round((p.free/p.total)*100);
+    const cls=pct<10?'park-full':pct<35?'park-busy':'park-ok';
+    const barcls=pct<10?'bar-r':pct<35?'bar-o':'bar-g';
     return `
     <div class="park-card ${cls}">
       <div class="park-header">
         <span class="park-name">${p.name}</span>
-        ${p.ev ? `<span class="tag tag-g">${icon('zap','xs-ic')} EV</span>` : ''}
-        ${p.underground ? `<span class="tag tag-b">${icon('building','xs-ic')} UG</span>` : ''}
+        ${p.ev?`<span class="tag tag-g">${icon('zap','xs-ic')} EV</span>`:''}
+        ${p.underground?`<span class="tag tag-b">UG</span>`:''}
       </div>
-      <div class="park-spots">
-        <span class="park-free">${p.free}</span>
-        <span class="park-total"> / ${p.total} free</span>
-      </div>
-      <div class="progress-wrap">
-        <div class="progress-bar ${pct<15?'bar-r':pct<40?'bar-o':'bar-g'}" style="width:${100-pct}%"></div>
-      </div>
+      <div class="park-spots"><span class="park-free">${p.free}</span><span class="park-total"> / ${p.total} free</span></div>
+      <div class="progress-wrap"><div class="progress-bar ${barcls}" style="width:${Math.max(2,100-pct)}%"></div></div>
       <div class="park-footer">
         <span class="park-price">${icon('wallet','xs-ic')} ₹${p.price}/hr</span>
         <button class="btn-xs btn-p" onclick="reserveParking(${p.id})">Reserve</button>
       </div>
-    </div>`;
-  }).join('');
+    </div>`}).join('');
 }
 
-/* ── BUSES ───────────────────────────────────────── */
-function renderBuses() {
-  const el = document.getElementById('bus-list');
-  if (!el) return;
-  el.innerHTML = S.buses.map(b => `
+/* ── BUSES ────────────────────────────────────── */
+function renderBuses(){
+  const el=document.getElementById('bus-list'); if(!el) return;
+  el.innerHTML=S.buses.map(b=>`
     <div class="bus-item">
-      <div class="bus-route">${icon('bus','sm-ic')} <strong>${b.route}</strong></div>
+      <div class="bus-route">${icon('bus','sm-ic')} <strong>${b.route}</strong> &nbsp;
+        <span class="tag ${b.delay?'tag-r':'tag-g'}">${b.delay?`+${b.delay}m delay`:'On Time'}</span>
+      </div>
       <div class="bus-dest">${b.from} → ${b.to}</div>
       <div class="bus-meta">
-        <span class="tag ${b.delay ? 'tag-r' : 'tag-g'}">${b.delay ? `${b.delay}m delay` : 'On Time'}</span>
         <span class="tag tag-b">${icon('clock','xs-ic')} ETA ${b.eta}m</span>
         <span class="tag tag-p">${icon('users','xs-ic')} ${b.occupancy}%</span>
-        <span>${b.seats} seats</span>
+        <span class="tag tag-o">${b.seats} seats free</span>
+        <button class="btn-xs btn-ghost" onclick="trackBus(${b.id})">Track</button>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-/* ── ENVIRONMENT ─────────────────────────────────── */
-function renderEnv() {
-  const el = document.getElementById('env-gauges');
-  if (!el) return;
-  el.innerHTML = S.env.map(e => {
-    const pct = Math.min(100, Math.round((e.val / e.max) * 100));
-    const bad = pct > e.warn;
+function updateBusesSilent(){
+  S.buses.forEach(b=>{
+    b.eta=Math.max(1,b.eta-1);
+    if(b.eta<=1){b.eta=R(3,20);b.delay=R(0,3)===0?0:R(2,10);}
+    b.occupancy=Math.max(5,Math.min(100,b.occupancy+R(-3,3)));
+    b.seats=Math.max(0,Math.min(50,b.seats+R(-2,2)));
+    const el=document.querySelector(`#bus-list .bus-item:nth-child(${b.id+1})`);
+    if(el){
+      const tag=el.querySelector('.tag');
+      if(tag){tag.className=`tag ${b.delay?'tag-r':'tag-g'}`;tag.textContent=b.delay?`+${b.delay}m delay`:'On Time';}
+      const etaTag=el.querySelectorAll('.tag')[1];
+      if(etaTag) etaTag.innerHTML=`${icon('clock','xs-ic')} ETA ${b.eta}m`;
+    }
+  });
+}
+
+/* ── ENV ──────────────────────────────────────── */
+function renderEnv(){
+  const el=document.getElementById('env-gauges'); if(!el) return;
+  el.innerHTML=S.env.map(e=>{
+    const pct=Math.min(100,Math.round((e.val/e.max)*100));
+    const bad=e.val>=e.warn;
     return `
-    <div class="env-card">
-      <div class="env-icon ${bad ? 'env-bad' : 'env-ok'}">${icon(e.icon)}</div>
+    <div class="env-card" id="env-${e.id}">
+      <div class="env-icon ${bad?'env-bad':'env-ok'}">${icon(e.ic)}</div>
       <div class="env-label">${e.label}</div>
       <div class="env-val">${e.val}<span class="env-unit">${e.unit}</span></div>
-      <div class="progress-wrap env-bar">
-        <div class="progress-bar ${bad?'bar-r':'bar-g'}" style="width:${pct}%"></div>
-      </div>
-      <div class="env-status">${bad ? `<span class="tag tag-r">High</span>` : `<span class="tag tag-g">Normal</span>`}</div>
-    </div>`;
-  }).join('');
+      <div class="progress-wrap env-bar"><div class="progress-bar ${bad?'bar-r':'bar-g'}" style="width:${pct}%"></div></div>
+      <div class="env-status"><span class="tag ${bad?'tag-r':'tag-g'}">${bad?'High':'Normal'}</span></div>
+    </div>`}).join('');
 }
 
-/* ── CARPOOL ─────────────────────────────────────── */
-function renderCarpool() {
-  const el = document.getElementById('carpool-list');
-  if (!el) return;
-  const rides = Array.from({length: 5}, (_, i) => ({
-    id: i + 1,
-    name: ['Amit K.','Priya S.','Ravi M.','Sunita P.','Deepak R.'][i],
-    from: C(AREAS), to: C(AREAS),
-    time: `${R(7,9)}:${R(0,5)}0 AM`,
-    seats: R(1, 3),
-    price: R(30, 120),
-  }));
-  el.innerHTML = rides.map(r => `
+function updateEnvSilent(){
+  S.env.forEach(e=>{
+    e.val=Math.max(e.min,Math.min(e.max,parseFloat((e.val+RF(-1.5,1.5)).toFixed(1))));
+    const card=document.getElementById(`env-${e.id}`); if(!card) return;
+    const bad=e.val>=e.warn;
+    const pct=Math.min(100,Math.round((e.val/e.max)*100));
+    const valEl=card.querySelector('.env-val');
+    if(valEl) valEl.innerHTML=`${e.val}<span class="env-unit">${e.unit}</span>`;
+    const bar=card.querySelector('.progress-bar');
+    if(bar){bar.className=`progress-bar ${bad?'bar-r':'bar-g'}`;bar.style.width=pct+'%';}
+    const iconEl=card.querySelector('.env-icon');
+    if(iconEl) iconEl.className=`env-icon ${bad?'env-bad':'env-ok'}`;
+    const tag=card.querySelector('.tag');
+    if(tag){tag.className=`tag ${bad?'tag-r':'tag-g'}`;tag.textContent=bad?'High':'Normal';}
+  });
+}
+
+/* ── CARPOOL ──────────────────────────────────── */
+function renderCarpool(){
+  const el=document.getElementById('carpool-list'); if(!el) return;
+  el.innerHTML=S.carpools.map(r=>`
     <div class="carpool-item">
       <div class="carpool-avatar">${r.name[0]}</div>
       <div class="carpool-body">
-        <div class="carpool-name">${r.name}</div>
+        <div class="carpool-name">${r.name} <span class="tag tag-y">★ ${r.rating}</span></div>
         <div class="carpool-route">${icon('route','xs-ic')} ${r.from} → ${r.to}</div>
         <div class="carpool-meta">
           <span class="tag tag-b">${icon('clock','xs-ic')} ${r.time}</span>
@@ -425,23 +405,21 @@ function renderCarpool() {
           <span class="tag tag-p">${icon('wallet','xs-ic')} ₹${r.price}</span>
         </div>
       </div>
-      <button class="btn-xs btn-p" onclick="joinCarpool(${r.id})">Join</button>
-    </div>
-  `).join('');
+      <button class="btn-sm btn-p" onclick="joinCarpool(${r.id})">Join</button>
+    </div>`).join('');
 }
 
-/* ── RIDE SHARE ──────────────────────────────────── */
-function renderShareOptions() {
-  const el = document.getElementById('share-options');
-  if (!el) return;
-  const opts = [
-    { name: 'UrbanAuto',  type: 'Auto',   eta: R(3,7),  price: R(40,80),   ic: 'car' },
-    { name: 'UrbanCab',   type: 'Cab',    eta: R(5,12), price: R(80,150),  ic: 'car2' },
-    { name: 'UrbanBike',  type: 'Bike',   eta: R(2,5),  price: R(20,50),   ic: 'bike' },
-    { name: 'UrbanPool',  type: 'Pool',   eta: R(8,15), price: R(30,60),   ic: 'users' },
-    { name: 'UrbanElec',  type: 'EV Cab', eta: R(6,14), price: R(90,160),  ic: 'zap' },
+/* ── RIDE SHARE ───────────────────────────────── */
+function renderShareOptions(){
+  const el=document.getElementById('share-options'); if(!el) return;
+  const opts=[
+    {name:'UrbanAuto', type:'Auto',   eta:R(3,7),  price:R(40,80),  ic:'car'},
+    {name:'UrbanCab',  type:'Cab',    eta:R(5,12), price:R(80,160), ic:'car2'},
+    {name:'UrbanBike', type:'Bike',   eta:R(2,5),  price:R(20,50),  ic:'bike'},
+    {name:'UrbanPool', type:'Pool',   eta:R(8,18), price:R(30,65),  ic:'users'},
+    {name:'UrbanEV',   type:'EV Cab', eta:R(6,14), price:R(90,170), ic:'zap'},
   ];
-  el.innerHTML = opts.map(o => `
+  el.innerHTML=opts.map(o=>`
     <div class="share-card">
       <div class="share-icon">${icon(o.ic)}</div>
       <div class="share-name">${o.name}</div>
@@ -449,43 +427,37 @@ function renderShareOptions() {
       <div class="share-eta">${icon('clock','xs-ic')} ${o.eta} min</div>
       <div class="share-price">₹${o.price}</div>
       <button class="btn-sm btn-p" onclick="bookRide('${o.name}')">Book</button>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-/* ── ANALYTICS ───────────────────────────────────── */
-function renderAnalytics() {
-  const el = document.getElementById('analytics-metrics');
-  if (!el) return;
-  const metrics = [
-    { label: 'Daily Trips',      val: '1,24,320', trend: '+5.2%',  ic: 'route',        col: 'g' },
-    { label: 'Avg Commute Time', val: '28 min',   trend: '-2 min', ic: 'clock',        col: 'b' },
-    { label: 'Fuel Saved (L)',   val: '8,540',    trend: '+12%',   ic: 'fuel',         col: 'o' },
-    { label: 'Accidents Today',  val: '3',         trend: '-2',    ic: 'alert',        col: 'r' },
-    { label: 'Public Transit %', val: '42%',       trend: '+3%',   ic: 'bus',          col: 'p' },
-    { label: 'Emissions Saved',  val: '2.1 t',     trend: '+0.4t', ic: 'leaf',         col: 'g' },
+/* ── ANALYTICS ────────────────────────────────── */
+function renderAnalytics(){
+  const el=document.getElementById('analytics-metrics'); if(!el) return;
+  const metrics=[
+    {label:'Daily Trips',       val:'1,24,320', trend:'+5.2%',  ic:'route',    col:'g'},
+    {label:'Avg Commute Time',  val:'28 min',   trend:'-2 min', ic:'clock',    col:'b'},
+    {label:'Fuel Saved (L)',    val:'8,540',    trend:'+12%',   ic:'fuel',     col:'o'},
+    {label:'Accidents Today',   val:'3',        trend:'-2',     ic:'alert',    col:'r'},
+    {label:'Public Transit %',  val:'42%',      trend:'+3%',    ic:'bus',      col:'p'},
+    {label:'Emissions Saved',   val:'2.1 t',    trend:'+0.4t',  ic:'leaf',     col:'g'},
   ];
-  el.innerHTML = metrics.map(m => `
-    <div class="analytics-card stat-${m.col}">
+  el.innerHTML=metrics.map(m=>`
+    <div class="stat-card stat-${m.col}">
       <div class="stat-icon">${icon(m.ic)}</div>
       <div class="stat-body">
         <div class="stat-val">${m.val}</div>
         <div class="stat-label">${m.label}</div>
       </div>
       <div class="stat-trend">${m.trend}</div>
-    </div>
-  `).join('');
-
-  setTimeout(() => {
-    drawLineChart('analytics-chart', ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], [
-      { data: [112000,118000,124000,121000,129000,105000,98000], color: '#22c55e' },
-      { data: [82000,88000,95000,91000,99000,75000,68000],       color: '#3b82f6' },
-    ]);
-  }, 50);
+    </div>`).join('');
+  setTimeout(()=>drawLineChart('analytics-chart',['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],[
+    {data:[112000,118000,124000,121000,129000,105000,98000],color:'#22c55e'},
+    {data:[82000,88000,95000,91000,99000,75000,68000],color:'#3b82f6'},
+  ]),50);
 }
 
-/* ── ADVANCED ────────────────────────────────────── */
-function renderAdvanced() {
+/* ── ADVANCED ─────────────────────────────────── */
+function renderAdvanced(){
   renderAVFleet();
   renderDrones();
   renderTolls();
@@ -493,247 +465,205 @@ function renderAdvanced() {
   renderTwinCanvas();
 }
 
-function renderAVFleet() {
-  const el = document.getElementById('av-fleet');
-  if (!el) return;
-  const vehicles = Array.from({length: 6}, (_, i) => ({
-    id: `AV-${100+i}`, status: C(['Active','Charging','Standby']),
-    battery: R(20,98), trips: R(4,28), zone: C(AREAS),
-  }));
-  el.innerHTML = vehicles.map(v => `
+function renderAVFleet(){
+  const el=document.getElementById('av-fleet'); if(!el) return;
+  el.innerHTML=S.avFleet.map(v=>`
     <div class="av-card">
       <div class="av-id">${icon('robot','sm-ic')} ${v.id}</div>
       <div class="av-status"><span class="tag ${v.status==='Active'?'tag-g':v.status==='Charging'?'tag-b':'tag-o'}">${v.status}</span></div>
       <div class="av-battery">${icon('zap','xs-ic')} ${v.battery}%
-        <div class="progress-wrap sm"><div class="progress-bar ${v.battery<30?'bar-r':'bar-g'}" style="width:${v.battery}%"></div></div>
+        <div class="progress-wrap sm"><div class="progress-bar ${v.battery<30?'bar-r':v.battery<60?'bar-o':'bar-g'}" style="width:${v.battery}%"></div></div>
       </div>
-      <div class="av-meta">${v.trips} trips today &nbsp;•&nbsp; ${v.zone}</div>
-    </div>
-  `).join('');
+      <div class="av-meta">${v.trips} trips &nbsp;•&nbsp; ${v.km} km &nbsp;•&nbsp; ${v.zone}</div>
+    </div>`).join('');
 }
 
-function renderDrones() {
-  const el = document.getElementById('drone-list');
-  if (!el) return;
-  const drones = Array.from({length: 5}, (_, i) => ({
-    id: `DR-${200+i}`, mission: C(['Delivery','Surveillance','Emergency','Inspection']),
-    alt: R(50,200), battery: R(30,95), eta: R(2,20),
-  }));
-  el.innerHTML = drones.map(d => `
+function renderDrones(){
+  const el=document.getElementById('drone-list'); if(!el) return;
+  el.innerHTML=S.drones.map(d=>`
     <div class="drone-item">
-      ${icon('drone','sm-ic')}
+      <div style="flex-shrink:0">${icon('drone','sm-ic')}</div>
       <div class="drone-body">
         <span class="drone-id">${d.id}</span>
         <span class="tag tag-b">${d.mission}</span>
-        <span class="tag tag-g">${icon('activity','xs-ic')} ${d.alt}m alt</span>
-        <span class="tag tag-p">${icon('zap','xs-ic')} ${d.battery}%</span>
-        <span class="tag tag-o">${icon('clock','xs-ic')} ${d.eta}m ETA</span>
+        <span class="tag ${d.status==='In Flight'?'tag-g':d.status==='Charging'?'tag-b':'tag-o'}">${d.status}</span>
+        <span class="tag tag-p">${d.altitude}m</span>
+        <span class="tag tag-y">${icon('zap','xs-ic')} ${d.battery}%</span>
+        <span class="tag tag-o">${icon('clock','xs-ic')} ${d.eta}m</span>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-function renderTolls() {
-  const el = document.getElementById('toll-list');
-  if (!el) return;
-  const tolls = ROADS.slice(0, 6).map((r, i) => ({
-    name: r, rate: R(20,80), vehicles: R(200,800), revenue: R(5000,40000),
-  }));
-  el.innerHTML = tolls.map(t => `
+function renderTolls(){
+  const el=document.getElementById('toll-list'); if(!el) return;
+  el.innerHTML=S.tolls.map(t=>`
     <div class="toll-item">
-      <div class="toll-name">${icon('road','xs-ic')} ${t.name}</div>
+      <div class="toll-name">${icon('road','xs-ic')} ${t.road}</div>
       <div class="toll-meta">
         <span>₹${t.rate}/vehicle</span>
-        <span>${icon('car','xs-ic')} ${t.vehicles.toLocaleString()} today</span>
+        <span class="tag tag-b">${icon('car','xs-ic')} ${t.vehicles.toLocaleString()}</span>
         <span class="tag tag-g">₹${t.revenue.toLocaleString()} revenue</span>
+        <span class="tag tag-p">FASTag ${t.fastag}%</span>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-function renderLogistics() {
-  const el = document.getElementById('logistics-list');
-  if (!el) return;
-  const trucks = Array.from({length: 5}, (_, i) => ({
-    id: `TRK-${300+i}`, cargo: C(['Electronics','Food','Medicine','Fuel','Packages']),
-    status: C(['En Route','Loading','Unloading','Waiting']),
-    eta: R(10, 120), weight: R(2, 22),
-  }));
-  el.innerHTML = trucks.map(t => `
+function renderLogistics(){
+  const el=document.getElementById('logistics-list'); if(!el) return;
+  el.innerHTML=S.logistics.map(t=>`
     <div class="logistics-item">
-      ${icon('package','sm-ic')}
+      <div style="flex-shrink:0">${icon('package','sm-ic')}</div>
       <div class="logistics-body">
         <span class="logistics-id">${t.id}</span>
         <span class="tag tag-b">${t.cargo}</span>
         <span class="tag ${t.status==='En Route'?'tag-g':t.status==='Waiting'?'tag-r':'tag-o'}">${t.status}</span>
-        <span>${t.weight}t &nbsp;•&nbsp; ETA ${t.eta}m</span>
+        <span>${t.from} → ${t.to}</span>
+        <span class="tag tag-p">${t.weight}t &nbsp;•&nbsp; ETA ${t.eta}m</span>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
-function renderTwinCanvas() {
-  const canvas = document.getElementById('twin-canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width = canvas.offsetWidth || 400;
-  const H = canvas.height = 260;
-  ctx.clearRect(0, 0, W, H);
-  ctx.fillStyle = '#f0fdf4';
-  ctx.fillRect(0, 0, W, H);
-
-  // Grid
-  ctx.strokeStyle = '#bbf7d0';
-  ctx.lineWidth = 1;
-  for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
-  for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
-
-  // Roads
-  ctx.strokeStyle = '#22c55e';
-  ctx.lineWidth = 10;
-  ctx.beginPath(); ctx.moveTo(0, H/2); ctx.lineTo(W, H/2); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(W/2, 0); ctx.lineTo(W/2, H); ctx.stroke();
-
-  // Vehicles
-  S.vehicles.slice(0, 20).forEach(v => {
-    const cx = (v.x / 100) * W, cy = (v.y / 100) * H;
-    ctx.fillStyle = v.type === 'bus' ? '#3b82f6' : '#166534';
-    ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill();
+function renderTwinCanvas(){
+  const canvas=document.getElementById('twin-canvas'); if(!canvas) return;
+  canvas.width=canvas.offsetWidth||500; canvas.height=260;
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height;
+  ctx.fillStyle='#f0fdf4'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='#bbf7d0'; ctx.lineWidth=1;
+  for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  ctx.strokeStyle='#22c55e'; ctx.lineWidth=12;
+  ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(W/2,0);ctx.lineTo(W/2,H);ctx.stroke();
+  ctx.lineWidth=6;
+  ctx.beginPath();ctx.moveTo(0,H/4);ctx.lineTo(W,H/4);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0,H*.75);ctx.lineTo(W,H*.75);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(W/4,0);ctx.lineTo(W/4,H);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(W*.75,0);ctx.lineTo(W*.75,H);ctx.stroke();
+  S.vehicles.slice(0,25).forEach(v=>{
+    const cx=(v.x/100)*W, cy=(v.y/100)*H;
+    ctx.fillStyle=v.type==='bus'?'#3b82f6':v.type==='emergency'?'#ef4444':'#166534';
+    ctx.beginPath(); ctx.arc(cx,cy,v.type==='bus'?6:4,0,Math.PI*2); ctx.fill();
   });
-
-  ctx.fillStyle = '#16a34a';
-  ctx.font = 'bold 12px DM Mono, monospace';
-  ctx.fillText('DIGITAL TWIN — LIVE', 10, 20);
+  ctx.fillStyle='#15803d'; ctx.font='bold 11px DM Mono,monospace';
+  ctx.fillText(`DIGITAL TWIN — ${S.twinMode.toUpperCase()} MODE`,10,18);
 }
 
-/* ── CITIZEN REPORT MAP ──────────────────────────── */
-function renderReportMap() {
-  const el = document.getElementById('report-map');
-  if (!el) return;
-  el.innerHTML = `
-    <div class="report-map-inner" onclick="addReportPin(event)" id="report-map-svg">
-      <svg width="100%" height="100%" viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg">
-        <rect width="400" height="260" fill="#f0fdf4"/>
-        <line x1="0" y1="130" x2="400" y2="130" stroke="#22c55e" stroke-width="8"/>
-        <line x1="200" y1="0" x2="200" y2="260" stroke="#22c55e" stroke-width="8"/>
-        <text x="10" y="20" font-size="10" fill="#16a34a" font-family="DM Mono">Tap to pin report</text>
-      </svg>
-      <div id="report-pins"></div>
-    </div>`;
-}
-
-/* ── SETTINGS ────────────────────────────────────── */
-function renderSettings() {
-  const el = document.getElementById('settings-body');
-  if (!el) return;
-  const groups = [
-    {
-      title: 'Display',
-      items: [
-        { label: 'Dark Mode',          id: 'set-dark',    val: false },
-        { label: 'Live Map Animation', id: 'set-anim',    val: true  },
-        { label: 'Show Vehicle Labels',id: 'set-vlabel',  val: false },
-        { label: 'High Contrast Mode', id: 'set-hc',      val: false },
-      ]
-    },
-    {
-      title: 'Notifications',
-      items: [
-        { label: 'Critical Alerts',    id: 'set-alert-c', val: true  },
-        { label: 'Traffic Updates',    id: 'set-alert-t', val: true  },
-        { label: 'Bus Delays',         id: 'set-alert-b', val: true  },
-        { label: 'Parking Alerts',     id: 'set-alert-p', val: false },
-      ]
-    },
-    {
-      title: 'Data',
-      items: [
-        { label: 'Auto-Refresh (1s)',   id: 'set-refresh', val: true  },
-        { label: 'AI Predictions',      id: 'set-ai',      val: true  },
-        { label: 'Share Anonymous Data',id: 'set-share',   val: false },
-      ]
-    }
+/* ── EMERGENCY CONTACTS ───────────────────────── */
+function renderEmergencyContacts(){
+  const el=document.getElementById('emergency-contacts'); if(!el) return;
+  const contacts=[
+    {name:'Police',         num:'100',      ic:'alert',     col:'r'},
+    {name:'Ambulance',      num:'108',      ic:'ambulance', col:'r'},
+    {name:'Fire Brigade',   num:'101',      ic:'flame',     col:'o'},
+    {name:'Traffic Control',num:'103',      ic:'traffic',   col:'b'},
+    {name:'Road Helpline',  num:'1033',     ic:'road',      col:'g'},
   ];
-  el.innerHTML = groups.map(g => `
-    <div class="settings-group card">
-      <div class="card-title">${g.title}</div>
-      ${g.items.map(item => `
-        <div class="settings-row">
-          <span>${item.label}</span>
-          <label class="toggle">
-            <input type="checkbox" id="${item.id}" ${item.val ? 'checked' : ''} onchange="handleSetting('${item.id}', this.checked)">
-            <span class="toggle-track"><span class="toggle-thumb"></span></span>
-          </label>
-        </div>
-      `).join('')}
-    </div>
-  `).join('');
-}
-
-/* ── ROUTE RESULT ────────────────────────────────── */
-function renderRoute(from, to, mode) {
-  const el = document.getElementById('route-result');
-  if (!el) return;
-  const dist = RF(2.5, 18).toFixed(1);
-  const mins = R(8, 45);
-  const steps = [
-    `Head ${C(['north','south','east','west'])} on ${C(ROADS)}`,
-    `Turn ${C(['left','right'])} onto ${C(ROADS)}`,
-    `Continue straight for ${RF(0.5,3).toFixed(1)} km`,
-    `Turn ${C(['left','right'])} onto ${C(ROADS)}`,
-    `Arrive at destination`,
-  ];
-  el.innerHTML = `
-    <div class="route-summary">
-      ${icon('route','sm-ic')} <strong>${from}</strong> → <strong>${to}</strong>
-      &nbsp;•&nbsp; ${dist} km &nbsp;•&nbsp; ${mins} min &nbsp;•&nbsp;
-      <span class="tag tag-g">${mode}</span>
-    </div>
-    <ol class="route-steps">
-      ${steps.map(s => `<li>${s}</li>`).join('')}
-    </ol>
-  `;
-}
-
-function renderEVRoute() {
-  const el = document.getElementById('ev-route-result');
-  if (!el) return;
-  const stations = Array.from({length: 3}, (_, i) => ({
-    name: `EV Station ${C(AREAS)}`, slots: R(1,6), dist: RF(0.5,5).toFixed(1)
-  }));
-  el.innerHTML = `
-    <div class="card" style="margin-top:1rem">
-      <div class="card-title">${icon('zap','sm-ic')} Charging Stops Along Route</div>
-      ${stations.map(s => `
-        <div class="ev-station-item">
-          ${icon('zap','sm-ic')} <strong>${s.name}</strong>
-          <span class="tag tag-g">${s.slots} slots</span>
-          <span class="tag tag-b">${s.dist} km away</span>
-          <button class="btn-xs btn-p" onclick="showToast('Slot reserved at ${s.name}','success')">Reserve</button>
-        </div>
-      `).join('')}
-    </div>`;
-}
-
-/* ── EMERGENCY CONTACTS ──────────────────────────── */
-function renderEmergencyContacts() {
-  const el = document.getElementById('emergency-contacts');
-  if (!el) return;
-  const contacts = [
-    { name: 'Police',        num: '100',  ic: 'alert',     col: 'r' },
-    { name: 'Ambulance',     num: '108',  ic: 'ambulance', col: 'r' },
-    { name: 'Fire Brigade',  num: '101',  ic: 'flame',     col: 'o' },
-    { name: 'Traffic Control', num: '103', ic: 'traffic',  col: 'b' },
-    { name: 'Road Helpline', num: '1800-XXX', ic: 'road',  col: 'g' },
-  ];
-  el.innerHTML = contacts.map(c => `
+  el.innerHTML=contacts.map(c=>`
     <div class="emergency-contact stat-${c.col}">
       <div class="stat-icon">${icon(c.ic)}</div>
       <div class="stat-body">
         <div class="stat-val">${c.num}</div>
         <div class="stat-label">${c.name}</div>
       </div>
-      <a href="tel:${c.num}" class="btn-sm btn-d">${icon('phone','xs-ic')} Call</a>
-    </div>
-  `).join('');
+      <a href="tel:${c.num}" class="btn-sm btn-d" onclick="showToast('Calling ${c.name}...','info');return false">${icon('phone','xs-ic')} Call</a>
+    </div>`).join('');
+}
+
+/* ── CITIZEN REPORT MAP ───────────────────────── */
+function renderReportMap(){
+  const el=document.getElementById('report-map'); if(!el) return;
+  el.innerHTML=`
+    <div id="report-map-inner" style="width:100%;height:100%;position:relative;cursor:crosshair;background:#f0fdf4;border-radius:10px;overflow:hidden" onclick="addReportPin(event)">
+      <svg width="100%" height="100%" viewBox="0 0 500 300" xmlns="http://www.w3.org/2000/svg">
+        <rect width="500" height="300" fill="#f0fdf4"/>
+        <rect x="130" y="10" width="230" height="80" rx="5" fill="#dcfce7" stroke="#bbf7d0"/>
+        <rect x="130" y="110" width="230" height="80" rx="5" fill="#dcfce7" stroke="#bbf7d0"/>
+        <rect x="130" y="210" width="230" height="80" rx="5" fill="#dcfce7" stroke="#bbf7d0"/>
+        <line x1="0" y1="100" x2="500" y2="100" stroke="#22c55e" stroke-width="10"/>
+        <line x1="0" y1="200" x2="500" y2="200" stroke="#22c55e" stroke-width="8"/>
+        <line x1="120" y1="0" x2="120" y2="300" stroke="#22c55e" stroke-width="10"/>
+        <line x1="370" y1="0" x2="370" y2="300" stroke="#22c55e" stroke-width="8"/>
+        <text x="10" y="16" font-size="9" fill="#15803d" font-family="DM Mono" font-weight="bold">Click to pin report location</text>
+      </svg>
+      <div id="report-pins"></div>
+    </div>`;
+}
+
+/* ── SETTINGS ─────────────────────────────────── */
+function renderSettings(){
+  const el=document.getElementById('settings-body'); if(!el) return;
+  const groups=[
+    {title:'Display',items:[
+      {label:'Dark Mode',           id:'set-dark',    val:false},
+      {label:'Live Map Animation',  id:'set-anim',    val:true},
+      {label:'High Contrast Mode',  id:'set-hc',      val:false},
+    ]},
+    {title:'Notifications',items:[
+      {label:'Critical Alerts',     id:'set-alert-c', val:true},
+      {label:'Traffic Updates',     id:'set-alert-t', val:true},
+      {label:'Bus Delays',          id:'set-alert-b', val:true},
+      {label:'Parking Alerts',      id:'set-alert-p', val:false},
+    ]},
+    {title:'Data & AI',items:[
+      {label:'Auto-Refresh (1s)',   id:'set-refresh', val:true},
+      {label:'AI Predictions',      id:'set-ai',      val:true},
+      {label:'Share Anonymous Data',id:'set-share',   val:false},
+    ]},
+  ];
+  el.innerHTML=groups.map(g=>`
+    <div class="settings-group card">
+      <div class="card-title">${g.title}</div>
+      ${g.items.map(item=>`
+        <div class="settings-row">
+          <span>${item.label}</span>
+          <label class="toggle">
+            <input type="checkbox" id="${item.id}" ${item.val?'checked':''} onchange="handleSetting('${item.id}',this.checked)">
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          </label>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+/* ── ROUTE RESULT ─────────────────────────────── */
+function renderRoute(from, to, mode){
+  const el=document.getElementById('route-result'); if(!el) return;
+  const dist=RF(2.5,18), mins=R(8,45);
+  const roads2=[C(ROADS),C(ROADS),C(ROADS)];
+  const dirs=['left','right','straight'];
+  el.innerHTML=`
+    <div style="background:var(--g1);border:1.5px solid var(--g3);border-radius:10px;padding:14px;margin-top:12px">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;font-size:.85rem;font-weight:700">
+        ${icon('route','sm-ic')} ${from} → ${to}
+        <span class="tag tag-g">${dist} km</span>
+        <span class="tag tag-b">${mins} min</span>
+        <span class="tag tag-p">${mode}</span>
+      </div>
+      <ol class="route-steps">
+        <li>Head ${C(['north','south','east','west'])} on <strong>${roads2[0]}</strong></li>
+        <li>Turn ${C(dirs)} onto <strong>${roads2[1]}</strong> — continue ${RF(0.5,3)} km</li>
+        <li>Take exit toward <strong>${C(AREAS)}</strong></li>
+        <li>Turn ${C(['left','right'])} onto <strong>${roads2[2]}</strong></li>
+        <li>Arrive at <strong>${to}</strong> on the ${C(['left','right'])}</li>
+      </ol>
+    </div>`;
+}
+
+function renderEVRoute(){
+  const el=document.getElementById('ev-route-result'); if(!el) return;
+  const stations=Array.from({length:3},()=>({
+    name:`EV Station — ${C(AREAS)}`, slots:R(1,8), dist:RF(0.5,5), wait:R(5,20)
+  }));
+  el.innerHTML=`
+    <div class="card" style="margin-top:1rem">
+      <div class="card-title">${icon('zap','sm-ic')} Charging Stops Along Route</div>
+      ${stations.map(s=>`
+        <div class="ev-station-item">
+          ${icon('zap','xs-ic')} <strong>${s.name}</strong>
+          <span class="tag tag-g">${s.slots} slots</span>
+          <span class="tag tag-b">${s.dist} km</span>
+          <span class="tag tag-o">${s.wait} min wait</span>
+          <button class="btn-xs btn-p" onclick="showToast('Slot reserved at ${s.name}','success')">Reserve</button>
+        </div>`).join('')}
+    </div>`;
 }
